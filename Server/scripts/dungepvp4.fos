@@ -1,0 +1,649 @@
+#include "_macros.fos"
+#include "entire.fos"
+#include "_msgstr.fos"
+#include "_maps.fos"
+#include "_defines.fos"
+#include "linetracer_h.fos"
+
+#define PID_FLY_VERT	( 830 )
+#define MIN_PLAYERS     ( 4 )
+#define MAX_PLAYERS     ( 4 )
+#define MAX_DISTANCE    ( 12 )
+#define SAFE_DISTANCE	( 3 )
+#define KD              ( 60 ) //глобальный КД в минутах
+#define CLOSE_DOOR_TIME		( __FullSecond + ( 1 * 20 ) )	// Время в игровых секундах до автоматического закрытия двери.
+#define ACID_VALUE		( 90 )
+
+//На реквиеме закоментить
+#define PID_MET_COMPOSITE_SHEET (8056)
+#define PID_FRAG_SHOTGUN                     ( 7907 )
+#define PID_SHAITAN                          ( 7908 )
+#define PID_NAILS_BIG                        ( 8122 )
+#define PID_GASLASER                         ( 7917 )
+#define PID_C_NAILGUN                        ( 7918 )
+#define PID_THROWING_KNIFE_MK2                      ( 8106 )
+#define PID_HAND_LAUNCHER                         ( 898 )
+#define PID_PG_FRAG                                  ( 651 )
+#define PID_PG_PLAS                                  ( 652 )
+#define PID_PG_PULS                                  ( 653 )
+#define PID_TURL_BOX                              ( 900 )
+
+//#define PID_MET_COMPOSITE_SHEET	(19) //композитки нет пока прототипа - будет камень для примера
+
+#define STR_QUEST_PVP4X4_FIRSTWAVE  ( 80001 ) //"Банда Карлоса: пшш..Группа смельчаков заступила в дозор...пшш...Отправьте ребят для подстраховки пшшшш..."
+#define STR_QUEST_PVP4X4_RAIDERWAVE ( 80002 ) //"Карлос: пшш.. Не подведите там меня пшш..."
+
+#define EVENT_PRIZ		( PID_MET_COMPOSITE_SHEET ) //Указать вещь в награду
+
+import void AffectPoison( Critter& cr, int value ) from "poison";
+
+import void SmokeBlast( Map& map, uint16 hexX, uint16 hexY, uint16 smokePid, uint ownerId ) from "smoke_grenade";
+
+
+//dungepvp4@dunge4x4_CheckGroup
+//dungepvp4@dung4x4_CheckAccess
+//dungepvp4@dung4x4_CheckEvent
+//dungepvp4@dung4x4_Fail
+//dungepvp4@dung4x4_CheckEventRaider
+//dungepvp4@dunge4x4_CheckGroupRaider
+
+bool dung4x4_CheckEvent( Critter& player, Critter@ npc)
+{
+	GameVar@ q_4x4_dung_glob = GetGlobalVar( GVAR_event_4x4_glob );
+	if(q_4x4_dung_glob==0){ return true; }else{ return false; }
+}
+
+bool dung4x4_CheckAccess( Critter& player, Critter@ npc)
+{
+	Critter@[] groups;
+    groups.insertLast( @player );
+    player.GetFollowGroup( FIND_ALL, groups );
+	bool NormalDistance = true;
+	for( uint i = 0; i < groups.length(); i++ ) if( GetDistantion( npc.HexX, npc.HexY, groups[ i ].HexX, groups[ i ].HexY ) > MAX_DISTANCE ) { NormalDistance=false; }
+	if( (groups.length() < MIN_PLAYERS) || (groups.length() > MAX_PLAYERS) || (!NormalDistance) ){ return false; } else { return true; }
+}
+
+uint dunge4x4_CheckGroup( Critter& player, Critter@ npc)
+{
+	if((dung4x4_CheckAccess(player,npc)) && (dung4x4_CheckEvent(player,npc))){ _Dung4x4_Init(player, npc); }
+	return 0;
+}
+
+void _Dung4x4_Init(Critter& player, Critter@ cr) // Инициализация данжа
+{
+	SetDunge4x4Location(player);
+}
+
+void _GetDoorPassword(Map& map)
+{
+	uint DoorKeyPass = Random( 1000000, 10000000 );
+	
+    Item@ door = map.GetDoor( 235, 287 );
+	CreateTimeEvent( CLOSE_DOOR_TIME, "item@e_AutoCloseDoor", door.Id, true );
+    if( valid( door ) ) { door.LockerId = DoorKeyPass; door.Update(); }
+	// Ключ
+	Item@[] containers;
+	map.GetItemsByType(ITEM_TYPE_CONTAINER, containers);
+	uint RandomContainer = Random(0, containers.length()-1);
+	containers[RandomContainer].AddItem(PID_KEY, 1, 0);
+	Item@ keyOnBox = containers[RandomContainer].GetItem(PID_KEY,-1);
+	if( valid( keyOnBox ) ) { keyOnBox.LockerId = DoorKeyPass; } else { Log( "Create key on box fail." ); }
+	
+	RandomContainer = Random(0, containers.length()-1);
+	containers[RandomContainer].AddItem(PID_KEY, 1, 0);
+	Item@ keyOnBox1 = containers[RandomContainer].GetItem(PID_KEY,-1);
+	if( valid( keyOnBox1 ) ) { keyOnBox1.LockerId = DoorKeyPass; } else { Log( "Create key on box fail." ); }
+	RandomContainer = Random(0, containers.length()-1);
+	containers[RandomContainer].AddItem(PID_KEY, 1, 0);
+	Item@ keyOnBox2 = containers[RandomContainer].GetItem(PID_KEY,-1);
+	if( valid( keyOnBox2 ) ) { keyOnBox2.LockerId = DoorKeyPass; } else { Log( "Create key on box fail." ); }
+	RandomContainer = Random(0, containers.length()-1);
+	containers[RandomContainer].AddItem(PID_KEY, 1, 0);
+	Item@ keyOnBox3 = containers[RandomContainer].GetItem(PID_KEY,-1);
+	if( valid( keyOnBox3 ) ) { keyOnBox3.LockerId = DoorKeyPass; } else { Log( "Create key on box fail." ); }
+	RandomContainer = Random(0, containers.length()-1);
+	containers[RandomContainer].AddItem(PID_KEY, 1, 0);
+	Item@ keyOnBox4 = containers[RandomContainer].GetItem(PID_KEY,-1);
+	if( valid( keyOnBox4 ) ) { keyOnBox4.LockerId = DoorKeyPass; } else { Log( "Create key on box fail." ); }
+}
+
+bool SetDunge4x4Location( Critter& player )
+{
+	uint locId = CreateLocation( MAP_dunge2, 175, 175, null );
+	if( locId == 0 ) return false;
+	Location @ loc = GetLocation( locId );
+	loc.Visible = false;
+	loc.AutoGarbage = false;
+	loc.Radius = 12;
+	if( !valid( loc ) ) return false;
+	Map @ map = loc.GetMapByIndex( 0 );
+	if( !valid( map ) ) return false;
+
+	//Создать тайм евент уничтожения этой карты в любом случае
+	CreateTimeEvent( __FullSecond + (30*60*20), "e_Dung4x4_Destroy", map.Id, true );
+	
+    CreateTimeEvent( __FullSecond + (KD*60*20), "e_Dung4x4_KD", true );
+	
+	GameVar@ q_4x4_dung_loc = GetGlobalVar( GVAR_event_4x4_local );
+	q_4x4_dung_loc = 200; //Первый радиус безопасной зоны
+	
+	Item@[] containers;
+	map.GetItemsByType(ITEM_TYPE_CONTAINER, containers);
+	
+	for( uint i = 0; i < containers.length(); i++ )
+	{
+		if(Random(1,10)>7) containers[i].AddItem(PID_COMBAT_ARMOR, Random(0,1), 0);
+		if(Random(1,10)>3) containers[i].AddItem(PID_STIMPAK, Random(1,5), 0);
+		if(Random(1,10)>7) containers[i].AddItem(PID_FIRST_AID_KIT, Random(0,1), 0);
+		if(Random(1,10)>9) containers[i].AddItem(PID_LEATHER_JACKET, Random(0,1), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_IGUANA_ON_A_STICK, Random(0,3), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_44_FMJ_MAGNUM, Random(10,20), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_9MM_BALL, Random(10,20), 0);
+		if(Random(1,10)>6) containers[i].AddItem(PID_SUPER_STIMPAK, Random(0,2), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_45_CALIBER_AMMO, Random(10,30), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_2MM_EC_AMMO, Random(10,20), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_4_7MM_CASELESS, Random(10,30), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_9MM_AMMO, Random(10,40), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_HN_NEEDLER_CARTRIDGE, Random(10,20), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_HN_AP_NEEDLER_CARTRIDGE, Random(10,20), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_7_62MM_AMMO, Random(30,90), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_223_FMJ, Random(30,90), 0);
+		if(Random(1,10)>7) containers[i].AddItem(PID_LEATHER_ARMOR_MK_II, Random(0,1), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_METAL_ARMOR_MK_II, Random(0,1), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_FLAMETHROWER_FUEL_MK_II, Random(5,10), 0);
+		if(Random(1,10)>7) containers[i].AddItem(PID_METAL_ARMOR, Random(0,1), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_SHOTGUN_SHELLS, Random(10,40), 0);
+		
+	}
+	
+	map.SetEvent( MAP_EVENT_LOOP_0, "_Dung4x4AcidDead" );
+	//map.SetLoopTime( 0, 300000 ); //5 минут
+	map.SetLoopTime( 0, 300000 ); //5 минут
+	
+	map.SetEvent( MAP_EVENT_LOOP_1, "_Dung4x4LoadStaff" );
+	map.SetLoopTime( 1, 30000 ); //30 sec
+
+	map.SetEvent( MAP_EVENT_LOOP_2, "_Dung4x4Delete" );
+	map.SetLoopTime( 2, 1080000 ); //18 минут
+	
+	//награду на локацию....
+	map.SetEvent( MAP_EVENT_LOOP_3, "_Dung4x4Final" );
+	map.SetLoopTime( 3, 900000 );
+	//map.SetLoopTime( 3, 9000 );
+			
+    GameVar@ q_4x4_dung_mapId = GetGlobalVar( GVAR_event_4x4_mapid );
+	q_4x4_dung_mapId = map.Id;
+
+	Critter@[] groups;
+    groups.insertLast( @player );
+    player.GetFollowGroup( FIND_ALL, groups );
+	for( uint i = 0; i < groups.length(); i++ )
+    {
+		uint16 PosX=0;
+		uint16 PosY=0;
+		map.GetEntireCoords((i),0,PosX,PosY);
+		groups[ i ].TransitToMap( map.Id, PosX, PosY , 5);
+		_GiveWeapon(groups[ i ]);
+		map.SetData(i+1, groups[i].Id);
+    }
+		
+	GameVar@ q_4x4_dung_glob = GetGlobalVar( GVAR_event_4x4_glob );
+	q_4x4_dung_glob = 1;
+	
+	_GetDoorPassword(map);
+	
+	RadioMessageMsg(0, TEXTMSG_TEXT, STR_QUEST_PVP4X4_FIRSTWAVE);
+	return true;
+}
+
+void _GiveWeapon(Critter& cr)
+{
+	if (cr.SkillBase[ SK_SMALL_GUNS ] >=97)
+	{
+		//ЛО
+		cr.AddItem(PID_SNIPER_RIFLE, 1); cr.AddItem(PID_14MM_AP, 60);
+		cr.AddItem(PID_M72_GAUSS_RIFLE, 1); cr.AddItem(PID_PK12_GAUSS_PISTOL, 1); cr.AddItem(PID_2MM_EC_AMMO, 60); 
+		cr.AddItem(PID_HK_CAWS, 1); cr.AddItem(PID_PANCOR_JACKHAMMER, 1); cr.AddItem(PID_SHOTGUN_SHELLS, 60);
+		cr.AddItem(PID_INDEPENDENT, 1); cr.AddItem(PID_223_FMJ, 120);
+		cr.AddItem(PID_FN_FAL, 1); cr.AddItem(PID_FN_FAL_HPFA, 1); cr.AddItem(PID_7_62MM_AMMO, 120);
+		cr.AddItem(PID_HK_G11E, 1); cr.AddItem(PID_4_7MM_CASELESS, 120);
+	}
+
+	if (cr.SkillBase[ SK_ENERGY_WEAPONS ] >=97)
+	{
+		//Энерго
+		cr.AddItem(PID_YK42B_PULSE_RIFLE, 1); cr.AddItem(PID_TURBO_PLASMA_RIFLE, 1);
+		cr.AddItem(PID_PLASMA_RIFLE, 1); cr.AddItem(PID_YK32_PULSE_PISTOL, 1);
+		cr.AddItem(PID_LASER_RIFLE, 1); cr.AddItem(PID_LASER_RIFLE_EXT_CAP, 1);
+		cr.AddItem(PID_SMALL_ENERGY_CELL, 60); cr.AddItem(PID_MICRO_FUSION_CELL, 60);
+	}
+
+	if (cr.SkillBase[ SK_BIG_GUNS ] >=97)
+	{
+		//Тяж
+		cr.AddItem(PID_ROCKET_LAUNCHER, 1); cr.AddItem(PID_BOZAR, 1);
+		cr.AddItem(PID_VINDICATOR_MINIGUN, 1); cr.AddItem(PID_IMPROVED_FLAMETHROWER, 1);
+		cr.AddItem(PID_223_FMJ, 120); cr.AddItem(PID_4_7MM_CASELESS, 300);
+		cr.AddItem(PID_FLAMETHROWER_FUEL_MK_II, 30); cr.AddItem(PID_ROCKET_AP, 15);
+		cr.AddItem(PID_EXPLOSIVE_ROCKET, 15);
+	}
+
+	if (cr.SkillBase[ SK_SCIENCE ] >=110)
+	{
+		//Наука
+		//Добавить турель
+		//cr.AddItem(PID_TURL_BOX, 1);
+		cr.AddItem(PID_SMALL_ENERGY_CELL, 120);
+		cr.AddItem(PID_ROCKET_LAUNCHER, 1); cr.AddItem(PID_ROCKET_AP, 15);
+	}
+
+	if (cr.SkillBase[ SK_REPAIR ] >=140)
+	{
+		//ремонт
+		cr.AddItem(PID_FRAG_SHOTGUN, 1); cr.AddItem(PID_C_NAILGUN, 1);
+		cr.AddItem(PID_GASLASER, 1);
+		cr.AddItem(PID_MICRO_FUSION_CELL, 60); cr.AddItem(PID_SHOTGUN_SHELLS, 60);
+		cr.AddItem(PID_NAILS_BIG, 120); cr.AddItem(PID_SHAITAN, 15);
+	}
+	
+
+
+	if (cr.SkillBase[ SK_UNARMED ] >=100)
+	{
+		//рукопаш-руки
+		cr.AddItem(PID_MEGA_POWER_FIST, 1); cr.AddItem(PID_POWER_FIST, 1);
+		cr.AddItem(PID_SMALL_ENERGY_CELL, 60);
+	}
+
+	if (cr.SkillBase[ SK_MELEE_WEAPONS ] >=100)
+	{
+		//рукопаш-мечи
+		cr.AddItem(PID_WAKIZASHI_BLADE, 1); cr.AddItem(PID_CATTLE_PROD, 1);
+		cr.AddItem(PID_SMALL_ENERGY_CELL, 60);
+		cr.AddItem(PID_SUPER_SLEDGE, 1); cr.AddItem(PID_RIPPER, 1);
+	}
+
+	if (cr.SkillBase[ SK_THROWING ] >=100)
+	{
+		//гранаты
+		cr.AddItem(PID_FRAG_GRENADE, 30); cr.AddItem(PID_PLASMA_GRENADE, 30);
+		cr.AddItem(PID_PULSE_GRENADE, 30); cr.AddItem(PID_MOLOTOV_COCKTAIL, 30);
+		cr.AddItem(PID_THROWING_KNIFE_MK2, 30);
+		cr.AddItem(PID_HAND_LAUNCHER, 1); cr.AddItem(PID_PG_FRAG, 18);
+		cr.AddItem(PID_PG_PLAS, 18); cr.AddItem(PID_PG_PULS, 18);
+	}	
+}
+
+void _Dung4x4Delete(Map& map)
+{
+	_Dung4x4ToGlobal(map);
+
+	Location@ loc = map.GetLocation();
+	DeleteLocation( loc.Id );
+	//статус квест в "закрыто для всех групп"
+	GameVar@ q_4x4_dung_glob = GetGlobalVar( GVAR_event_4x4_glob );
+	q_4x4_dung_glob = 2;
+}
+
+void _Dung4x4LoadStaff(Map& map)
+{
+	//раз в минуту будем наполнять ящики патронами и всем прочим
+	Item@[] containers;
+	map.GetItemsByType(ITEM_TYPE_CONTAINER, containers);
+	
+	for( uint i = 0; i < containers.length(); i++ )
+	{
+		if(Random(1,100)>95) containers[i].AddItem(PID_SMOKE_GRENADE, Random(0,1), 0);
+		if(Random(1,10)>7) containers[i].AddItem(PID_COMBAT_ARMOR, Random(0,1), 0);
+		if(Random(1,10)>3) containers[i].AddItem(PID_STIMPAK, Random(0,10), 0);
+		if(Random(1,10)>7) containers[i].AddItem(PID_FIRST_AID_KIT, Random(0,1), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_ANTIDOTE, Random(0,1), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_MENTATS, Random(0,1), 0);
+		if(Random(1,100)>90) containers[i].AddItem(PID_STEALTH_BOY, Random(0,1), 0);
+		if(Random(1,10)>9) containers[i].AddItem(PID_LEATHER_JACKET, Random(0,1), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_IGUANA_ON_A_STICK, Random(0,3), 0);
+		if(Random(1,100)>90) containers[i].AddItem(PID_PLASTIC_EXPLOSIVES, Random(0,1), 0);
+		if(Random(1,10)>7) containers[i].AddItem(PID_BUFFOUT, Random(0,1), 0);
+		if(Random(1,10)>9) containers[i].AddItem(PID_RAD_X, Random(0,1), 0);
+		if(Random(1,100)>90) containers[i].AddItem(PID_PSYCHO, Random(0,1), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_44_FMJ_MAGNUM, Random(10,40), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_9MM_BALL, Random(10,40), 0);
+		if(Random(1,10)>6) containers[i].AddItem(PID_SUPER_STIMPAK, Random(0,5), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_MOLOTOV_COCKTAIL, Random(0,2), 0);
+		if(Random(1,100)>95) containers[i].AddItem(PID_TESLA_ARMOR, Random(0,1), 0);
+		if(Random(1,10)>7) containers[i].AddItem(PID_JET, Random(0,1), 0);
+		if(Random(1,100)>90) containers[i].AddItem(PID_JET_ANTIDOTE, Random(0,1), 0);
+		if(Random(1,10)>9) containers[i].AddItem(PID_SUPER_TOOL_KIT, Random(0,1), 0);
+		if(Random(1,10)>9) containers[i].AddItem(PID_TALISMAN, Random(0,1), 0);
+		if(Random(1,100)>90) containers[i].AddItem(PID_HYPO_POISON, Random(0,1), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_45_CALIBER_AMMO, Random(30,90), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_2MM_EC_AMMO, Random(10,40), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_4_7MM_CASELESS, Random(30,90), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_9MM_AMMO, Random(10,40), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_HN_NEEDLER_CARTRIDGE, Random(10,40), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_HN_AP_NEEDLER_CARTRIDGE, Random(10,40), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_7_62MM_AMMO, Random(30,90), 0);
+		if(Random(1,10)>7) containers[i].AddItem(PID_LEATHER_ARMOR_MK_II, Random(0,1), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_METAL_ARMOR_MK_II, Random(0,1), 0);
+		if(Random(1,100)>98) containers[i].AddItem(PID_COMBAT_ARMOR_MK_II, Random(0,1), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_FLAMETHROWER_FUEL_MK_II, Random(5,20), 0);
+		if(Random(1,100)>90) containers[i].AddItem(PID_HYPO, Random(0,1), 0);
+		if(Random(1,10)>7) containers[i].AddItem(PID_METAL_ARMOR, Random(0,1), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_SHOTGUN_SHELLS, Random(10,40), 0);
+		if(Random(1,10)>8) containers[i].AddItem(PID_223_FMJ, Random(30,90), 0);
+	}
+}
+
+uint e_Dung4x4_KD(uint[] @ values)
+{
+	GameVar@ q_4x4_dung_glob = GetGlobalVar( GVAR_event_4x4_glob );
+	q_4x4_dung_glob = 0;
+	return 0;
+}
+
+void _Dung4x4AcidDead(Map& map)
+{
+	//Будем постепенно травить ядом. уменьшая радиус безопасной зоны
+	int SafeRadius = GetGlobalVar( GVAR_event_4x4_local ).GetValue();
+	//uint[] smokeIds;
+	Critter@[] critters;
+	map.GetCritters( 0, FIND_LIFE_AND_KO, critters );
+	for( uint i = 0, j = critters.length(); i < j; i++ )
+	{
+		if( GetDistantion( 231, 286, critters[i].HexX, critters[i].HexY ) > SafeRadius )
+		{
+			AffectPoison( critters[i], ACID_VALUE );
+			critters[i].Say( SAY_EMOTE_ON_HEAD, "khe-khe-khe" );
+			SmokeBlast( map, critters[i].HexX, critters[i].HexY, PID_SMOKE, 0 );
+			//AddSmoke( map, critters[i].HexX, critters[i].HexY, PID_SMOKE, smokeIds );
+		}
+	}
+	
+	//Рисуем круг задымления
+	SmokeRadius(map,231,286,SafeRadius);
+	
+	map.SetEvent( MAP_EVENT_LOOP_0, "_Dung4x4FastAcidDead" );
+	map.SetLoopTime( 0, 15000 ); //15 sec KD
+}
+
+void _Dung4x4FastAcidDead(Map& map)
+{
+	int SafeRadius = GetGlobalVar( GVAR_event_4x4_local ).GetValue();
+	Critter@[] critters;
+	//uint[] smokeIds;
+	map.GetCritters( 0, FIND_LIFE_AND_KO, critters );
+	for( uint i = 0, j = critters.length(); i < j; i++ )
+	{
+		if( GetDistantion( 231, 286, critters[i].HexX, critters[i].HexY ) > SafeRadius )
+		{
+			AffectPoison( critters[i], ACID_VALUE );
+			critters[i].Say( SAY_EMOTE_ON_HEAD, "khe-khe-kheя" );
+			SmokeBlast( map, critters[i].HexX, critters[i].HexY, PID_SMOKE, 0 );
+			//AddSmoke( map, critters[i].HexX, critters[i].HexY, PID_SMOKE, smokeIds );
+		}
+	}
+	//Рисуем круг задымления
+	SmokeRadius(map,231,286,SafeRadius);
+	GameVar@ q_4x4_dung_local = GetGlobalVar( GVAR_event_4x4_local );
+	if((SafeRadius-5)<=SAFE_DISTANCE){ q_4x4_dung_local = (SAFE_DISTANCE); } else { q_4x4_dung_local = (SafeRadius-5); };
+}
+
+void SmokeRadius(Map@ map, uint CenterX, uint CenterY, uint Radius)
+{
+	DeleteAllSmoke( map, PID_SMOKE );
+	//цикл поиска всех координат	
+	for(uint i=0, j=Radius; i<j; i++)
+	{
+		AddSpacialSmoke( map, CenterX-Radius+i,(CenterY-floor((Radius+i)/2)), PID_SMOKE );
+		AddSpacialSmoke( map, CenterX+i,(CenterY-Radius+(floor((i+1)/2))), PID_SMOKE );
+		AddSpacialSmoke( map, CenterX-Radius,(CenterY-floor(Radius/2)+i), PID_SMOKE );
+		AddSpacialSmoke( map, CenterX+Radius,(CenterY+floor(Radius/2)-i), PID_SMOKE );
+		AddSpacialSmoke( map, CenterX-i,(CenterY+Radius-floor((i)/2)), PID_SMOKE );
+		AddSpacialSmoke( map, CenterX+(i+1),(CenterY+Radius-floor((i+1)/2)), PID_SMOKE );
+	}
+}
+
+
+//Вторая часть - додроп второй пати
+bool dung4x4_CheckEventRaider( Critter& player, Critter@ npc)
+{
+	GameVar@ q_4x4_dung_glob = GetGlobalVar( GVAR_event_4x4_glob );
+	if(q_4x4_dung_glob==1){ return true; }else{ return false; }
+}
+
+uint dunge4x4_CheckGroupRaider( Critter& player, Critter@ npc)
+{
+	if((dung4x4_CheckAccess(player,npc)) && (dung4x4_CheckEventRaider(player,npc))){ _Dung4x4_InitRaider(player, npc); }
+	return 0;
+}
+
+void _Dung4x4_InitRaider(Critter& player, Critter@ cr)
+{
+	SetDunge4x4LocationRaider(player);
+}
+
+bool SetDunge4x4LocationRaider( Critter& player )
+{
+	int dunge = GetGlobalVar( GVAR_event_4x4_mapid ).GetValue();
+	Map@   map = GetMap( dunge );
+	if( !valid( map ) ) return false;
+	
+	Critter@[] groups;
+    groups.insertLast( @player );
+    player.GetFollowGroup( FIND_ALL, groups );
+	int RandomEnter = (Random(1,21))*10;
+	
+	for( uint i = 0; i < groups.length(); i++ )
+    {
+		uint16 PosX=0;
+		uint16 PosY=0;
+		map.GetEntireCoords((RandomEnter+i),0,PosX,PosY);
+		groups[ i ].TransitToMap( dunge, PosX, PosY , 5);
+		_GiveWeapon(groups[ i ]);
+		map.SetData(i+5, groups[i].Id);
+    }
+	
+	GameVar@ q_4x4_dung_glob = GetGlobalVar( GVAR_event_4x4_glob );
+	q_4x4_dung_glob = 2;
+	
+	RadioMessageMsg(0, TEXTMSG_TEXT, STR_QUEST_PVP4X4_RAIDERWAVE);
+	return true;
+}
+
+
+//Дым в упрощенном варианте
+//void AddSmoke( Map@ map, uint16 hexX, uint16 hexY, int16 pid, uint[]& ids )
+void AddSmoke( Map@ map, uint16 hexX, uint16 hexY, int16 pid )
+{
+    if( valid( map ) && ( map.IsHexPassed( hexX, hexY ) || valid( map.GetCritter( hexX, hexY ) ) ) )
+    {
+        Item@ item = map.AddItem( hexX, hexY, pid, 1 );
+        if( valid( item ) )
+        {
+            //ids.insertLast( item.Id );
+           	SETFLAG( item.Flags, ITEM_NO_BLOCK );
+			SETFLAG( item.Flags, ITEM_SHOOT_THRU );
+        }
+    }
+}
+
+void AddSpacialSmoke( Map@ map, uint16 hexX, uint16 hexY, int16 pid )
+{
+    if( valid( map ) && ( map.IsHexPassed( hexX, hexY ) || valid( map.GetCritter( hexX, hexY ) ) ) )
+    {
+        Item@ item = map.AddItem( hexX, hexY, pid, 1 );
+        if( valid( item ) )
+        {
+			item.Val1=1;
+			//item.LightColor = 16711680; 
+			//SETFLAG( item.Flags, ITEM_LIGHT );
+           	SETFLAG( item.Flags, ITEM_NO_BLOCK );
+			SETFLAG( item.Flags, ITEM_SHOOT_THRU );
+			//item.Update();
+        }
+    }
+}
+
+void DeleteSmoke( Map@ map, uint16 hexX, uint16 hexY, int16 pid )
+{
+    if( valid( map ) && ( map.IsHexPassed( hexX, hexY ) || valid( map.GetCritter( hexX, hexY ) ) ) )
+    {
+        Item@[] item;
+		uint ItemsCount = map.GetItems( hexX, hexY, item );
+		for( uint i = 0; i < ItemsCount; i++ ){ if(item[i].GetProtoId()==pid){ DeleteItem( item[i] ); } }
+    }
+}
+
+void DeleteAllSmoke( Map@ map, int16 pid )
+{
+    if( valid( map ) )
+    {
+        Item@[] item;
+		uint ItemsCount = map.GetItems( pid, item );
+		for( uint i = 0; i < ItemsCount; i++ ){ if(item[i].Val1==1){ DeleteItem( item[i] ); } }
+    }
+}
+
+
+void _Dung4x4Final(Map& map)
+{
+	map.SetLoopTime( 3, 1800000 );
+    
+	//вертик пролетит и скинет труп
+	uint16 x0 = 405;
+    uint16 y0 = 268;
+	uint16 x1 = 18;
+    uint16 y1 = 251;
+    map.RunFlyEffect( PID_FLY_VERT, null, null, x0, y0, x1, y1 );
+	map.PlaySound("VertInOut.wav");
+	uint[] values = { map.Id  };
+	CreateTimeEvent( __FullSecond + (4*20+10), "e_Dung4x4_VertToBox", values, true );
+}
+
+uint e_Dung4x4_VertToBox(uint[] @ values)
+{
+	uint dunge = values[ 0 ];
+	Map@   map = GetMap( dunge );
+	
+	if( valid( map ) )
+	{
+		//выкинуть труп
+		map.PlaySound("GenericM_DeadBurn.wav");
+		Item@ TrupBox = map.AddItem(235,271,528,1);
+		@TrupBox.AddItem(EVENT_PRIZ, 1, 0);
+	}
+	return 0;
+}
+
+uint e_Dung4x4_Vert(uint[] @ values)
+{
+	uint dunge = values[ 0 ];
+	Map@   map = GetMap( dunge );
+	
+	if( valid( map ) )
+	{
+		Item@ Vert = map.AddItem(234,270,PID_FLY_VERT,1);
+		//выкинуть труп
+		map.PlaySound("GenericM_DeadBurn.wav");
+		Item@ TrupBox = map.AddItem(235,271,528,1);
+		@TrupBox.AddItem(EVENT_PRIZ, 1, 0);
+		uint[] values = { map.Id, Vert.Id  };
+		CreateTimeEvent( __FullSecond + (6*20), "e_Dung4x4_VertOut", values, true );
+	}	
+	return 0;
+}
+
+uint e_Dung4x4_VertOut(uint[] @ values)
+{
+	uint dunge = values[ 0 ];
+	Map@   map = GetMap( dunge );
+	if( valid( map ) )
+	{	
+		Item@    item;
+		@item = map.GetItem(values[ 1 ]);
+		if( valid( item ) ) DeleteItem( item );
+		
+		uint16 x0 = 234;
+		uint16 y0 = 270;
+		uint16 x1 = x0;
+		uint16 y1 = y0;
+		uint   dir = 0;
+		map.MoveHexByDir( x1, y1, dir, 150 );
+		map.RunFlyEffect( PID_FLY_VERT, null, null, x0, y0, x1, y1 );
+	}
+	
+	return 0;
+}
+
+void _Dung4x4ToGlobal(Map& map)
+{
+	//Всё отнять - кроме награды
+	//EVENT_PRIZ
+	Item@[] crItem;
+    Item@    item;
+	for(uint i=0; i<8; i++)
+	{
+		Critter@ cr = GetCritter(map.GetData((i+1)));
+		if(valid(cr))
+		{	
+			//проверить критер тут или умер и уже в другом месте
+			if(cr.GetMapId()==map.Id)
+			{
+				crItem.resize( 0 );
+				cr.GetItems(-1,crItem);
+				for( uint j = 0, k = crItem.length(); j < k; j++ )
+				{
+					@item = crItem[j];
+					if( valid( item ) && item.GetProtoId() != EVENT_PRIZ )
+					{
+						DeleteItem( item );
+					}
+				}
+				cr.Say( SAY_EMOTE_ON_HEAD, "с грустью в глазах отдаёт все вещи" );
+			}
+		}
+	}
+}
+
+
+uint e_Dung4x4_Destroy(uint[] @ values)
+{
+	//Найти карту
+	uint dunge = values[ 0 ];
+	Map@   map = GetMap( dunge );
+	if( !valid( map ) ) { return 0; }
+	else
+	{
+		//уничтожить карту
+		_Dung4x4ToGlobal(map);
+		Location@ loc = map.GetLocation();
+		DeleteLocation( loc.Id );
+	}
+
+	return 0;
+}
+
+
+//~run dungepvp4 _Destroy 0 0 0
+void _Destroy(Critter& cr, int p0, int p1, int p2)
+{
+	//Найти карту
+	uint dunge = p0;
+	Map@   map = GetMap( dunge );
+	if( valid( map ) )
+	{
+		//уничтожить карту
+		_Dung4x4ToGlobal(map);
+		Location@ loc = map.GetLocation();
+		DeleteLocation( loc.Id );
+		cr.Say( SAY_NORM, "локация удалена" );
+	}
+}
+
+//~run dungepvp4 _ReInit 0 0 0
+void _ReInit( Critter& cr, int p0, int p1, int p2 )
+{
+	GameVar@ q_4x4_dung_glob = GetGlobalVar( GVAR_event_4x4_glob );
+	q_4x4_dung_glob = 0;
+	cr.Say( SAY_NORM, "квест перезапущен" );
+}

@@ -1,0 +1,175 @@
+Application
+	Name        FOnlineServer
+	Version     0502
+	OS          6.2.9200 ()
+	Timestamp   2019.08.06 16:02:04
+
+Exception
+	Code      EXCEPTION_ACCESS_VIOLATION
+	Address   0x00507B97
+	Flags     0x0
+
+Thread 'Main' (196284, current)
+	FOnlineServer, protected: class asCDataType __thiscall asCBuilder::ModifyDataTypeFromNode(class asCDataType const &,class asCScriptNode *,class asCScriptCode *,enum asETypeModifiers *,bool *) + 343
+	FOnlineServer, public: int __thiscall asCBuilder::ParseFunctionDeclaration(class asCObjectType *,char const *,class asCScriptFunction *,bool,class asCArray<bool> *,bool *) + 706
+	FOnlineServer, public: virtual int __thiscall asCScriptEngine::RegisterGlobalFunction(char const *,struct asSFuncPtr const &,unsigned long) + 343
+	utils, Global_RunScript + 1556
+	FOnlineServer, void * __cdecl Script::LoadDynamicLibrary(char const *) + 598
+	FOnlineServer, public: void __thiscall BindFuncPragma::Call(class stlp_std::basic_string<char,class stlp_std::char_traits<char>,class stlp_std::allocator<char> > const &) + 796
+	FOnlineServer, public: virtual void __thiscall ScriptPragmaCallback::CallPragma(class stlp_std::basic_string<char,class stlp_std::char_traits<char>,class stlp_std::allocator<char> > const &,class Preprocessor::PragmaInstance const &) + 375
+	FOnlineServer, void __cdecl Preprocessor::CallPragma(class stlp_std::basic_string<char,class stlp_std::char_traits<char>,class stlp_std::allocator<char> > const &,class Preprocessor::PragmaInstance const &) + 27
+	FOnlineServer, void __cdecl stlp_std::_Param_Construct<class stlp_std::list<class Preprocessor::Lexem,class stlp_std::allocator<class Preprocessor::Lexem> >,class stlp_std::list<class Preprocessor::Lexem,class stlp_std::allocator<class Preprocessor::Lexem> > >(class stlp_std::list<class Preprocessor::Lexem,class stlp_std::allocator<class Preprocessor::Lexem> > *,class stlp_std::list<class Preprocessor::Lexem,class stlp_std::allocator<class Preprocessor::Lexem> > const &) + 750
+	FOnlineServer, public: class Preprocessor::DefineEntry & __thiscall stlp_std::map<class stlp_std::basic_string<char,class stlp_std::char_traits<char>,class stlp_std::allocator<char> >,class Preprocessor::DefineEntry,struct stlp_std::less<class stlp_std::basic_string<char,class stlp_std::char_traits<char>,class stlp_std::allocator<char> > >,class stlp_std::allocator<struct stlp_std::pair<class stlp_std::basic_string<char,class stlp_std::char_traits<char>,class stlp_std::allocator<char> > const ,class Preprocessor::DefineEntry> > >::operator[]<char const [9]>(char const (&)[9]) + 4979
+	FOnlineServer, public: class Preprocessor::DefineEntry & __thiscall stlp_std::map<class stlp_std::basic_string<char,class stlp_std::char_traits<char>,class stlp_std::allocator<char> >,class Preprocessor::DefineEntry,struct stlp_std::less<class stlp_std::basic_string<char,class stlp_std::char_traits<char>,class stlp_std::allocator<char> > >,class stlp_std::allocator<struct stlp_std::pair<class stlp_std::basic_string<char,class stlp_std::char_traits<char>,class stlp_std::allocator<char> > const ,class Preprocessor::DefineEntry> > >::operator[]<char const [9]>(char const (&)[9]) + 4801
+	FOnlineServer, int __cdecl Preprocessor::Preprocess(class stlp_std::basic_string<char,class stlp_std::char_traits<char>,class stlp_std::allocator<char> >,class Preprocessor::FileSource &,class Preprocessor::OutStream &,bool,class Preprocessor::OutStream *,class Preprocessor::LineNumberTranslator *) + 398
+	FOnlineServer, bool __cdecl Script::LoadScript(char const *,char const *,bool,char const *) + 3337
+	FOnlineServer, bool __cdecl Script::ReloadScripts(char const *,char const *,bool,char const *) + 493
+	FOnlineServer, public: static bool __cdecl FOServer::InitScriptSystem(void) + 68268
+	FOnlineServer, public: static bool __cdecl FOServer::InitReal(void) + 667
+	FOnlineServer, public: static bool __cdecl FOServer::Init(void) + 22
+	FOnlineServer, void __cdecl GameLoopThread(void *) + 10
+	FOnlineServer, void * __cdecl ThreadBeginExecution(void *) + 44
+	FOnlineServer, _ptw32_threadStart@4 + 97
+	FOnlineServer, __endthreadex + 58
+	FOnlineServer, __endthreadex + 196
+	KERNEL32, BaseThreadInitThunk + 25
+	ntdll, RtlGetAppContainerNamedObjectPath + 237
+	ntdll, RtlGetAppContainerNamedObjectPath + 189
+
+Thread 'GUI' (29124)
+	win32u, NtUserMsgWaitForMultipleObjectsEx + 12
+	USER32, MsgWaitForMultipleObjects + 77
+	FOnlineServer, int __cdecl fl_wait(double) + 665
+	FOnlineServer, public: static double __cdecl Fl::wait(double) + 23
+	FOnlineServer, public: static int __cdecl Fl::wait(void) + 33
+	FOnlineServer, _main + 1153
+	FOnlineServer, _WinMain@16 + 402
+	FOnlineServer, __tan_default + 552
+	KERNEL32, BaseThreadInitThunk + 25
+	ntdll, RtlGetAppContainerNamedObjectPath + 237
+	ntdll, RtlGetAppContainerNamedObjectPath + 189
+
+Thread 'Unknown' (195020)
+	ntdll, ZwWaitForWorkViaWorkerFactory + 12
+	KERNEL32, BaseThreadInitThunk + 25
+	ntdll, RtlGetAppContainerNamedObjectPath + 237
+	ntdll, RtlGetAppContainerNamedObjectPath + 189
+
+Thread 'Unknown' (193492)
+	ntdll, ZwWaitForWorkViaWorkerFactory + 12
+	KERNEL32, BaseThreadInitThunk + 25
+	ntdll, RtlGetAppContainerNamedObjectPath + 237
+	ntdll, RtlGetAppContainerNamedObjectPath + 189
+
+Thread 'Unknown' (65904)
+	ntdll, ZwWaitForWorkViaWorkerFactory + 12
+	KERNEL32, BaseThreadInitThunk + 25
+	ntdll, RtlGetAppContainerNamedObjectPath + 237
+	ntdll, RtlGetAppContainerNamedObjectPath + 189
+
+Thread 'Unknown' (40740)
+	ntdll, ZwWaitForWorkViaWorkerFactory + 12
+	KERNEL32, BaseThreadInitThunk + 25
+	ntdll, RtlGetAppContainerNamedObjectPath + 237
+	ntdll, RtlGetAppContainerNamedObjectPath + 189
+
+Thread 'Unknown' (192828)
+	ntdll, ZwWaitForWorkViaWorkerFactory + 12
+	KERNEL32, BaseThreadInitThunk + 25
+	ntdll, RtlGetAppContainerNamedObjectPath + 237
+	ntdll, RtlGetAppContainerNamedObjectPath + 189
+
+Thread 'Unknown' (22828)
+	ntdll, ZwWaitForMultipleObjects + 12
+	combase, CoGetObjectContext + 302
+	combase, InternalRevokeWindowPropInterface + 2362
+	combase, CoGetObjectContext + 680
+	combase, CoIncrementMTAUsage + 3423
+	KERNEL32, BaseThreadInitThunk + 25
+	ntdll, RtlGetAppContainerNamedObjectPath + 237
+	ntdll, RtlGetAppContainerNamedObjectPath + 189
+
+Thread 'GUIUpdate' (191896)
+	ntdll, ZwDelayExecution + 12
+	KERNELBASE, Sleep + 15
+	FOnlineServer, void __cdecl GUIUpdate(void *) + 33
+	FOnlineServer, void * __cdecl ThreadBeginExecution(void *) + 44
+	FOnlineServer, _ptw32_threadStart@4 + 97
+	FOnlineServer, __endthreadex + 58
+	FOnlineServer, __endthreadex + 196
+	KERNEL32, BaseThreadInitThunk + 25
+	ntdll, RtlGetAppContainerNamedObjectPath + 237
+	ntdll, RtlGetAppContainerNamedObjectPath + 189
+
+Thread 'ScriptTimeout' (196100)
+	ntdll, ZwDelayExecution + 12
+	KERNELBASE, Sleep + 15
+	FOnlineServer, void __cdecl RunTimeout(void *) + 964
+	FOnlineServer, void * __cdecl ThreadBeginExecution(void *) + 44
+	FOnlineServer, _ptw32_threadStart@4 + 97
+	FOnlineServer, __endthreadex + 58
+	FOnlineServer, __endthreadex + 196
+	KERNEL32, BaseThreadInitThunk + 25
+	ntdll, RtlGetAppContainerNamedObjectPath + 237
+	ntdll, RtlGetAppContainerNamedObjectPath + 189
+
+Loaded modules
+	C:\Project\rev_371\Server\FOnlineServer.exe (00400000)
+	C:\Windows\SYSTEM32\ntdll.dll (772A0000)
+	C:\Windows\System32\KERNEL32.DLL (74E10000)
+	C:\Windows\System32\KERNELBASE.dll (75010000)
+	C:\Windows\System32\USER32.dll (76E60000)
+	C:\Windows\System32\win32u.dll (74AB0000)
+	C:\Windows\System32\GDI32.dll (77260000)
+	C:\Windows\System32\gdi32full.dll (75CC0000)
+	C:\Windows\System32\msvcp_win.dll (76DE0000)
+	C:\Windows\System32\ucrtbase.dll (75B90000)
+	C:\Windows\System32\ADVAPI32.dll (77160000)
+	C:\Windows\System32\msvcrt.dll (77000000)
+	C:\Windows\System32\sechost.dll (771E0000)
+	C:\Windows\System32\RPCRT4.dll (74F50000)
+	C:\Windows\System32\SspiCli.dll (74910000)
+	C:\Windows\System32\CRYPTBASE.dll (74900000)
+	C:\Windows\System32\bcryptPrimitives.dll (754D0000)
+	C:\Windows\System32\WS2_32.dll (74C70000)
+	C:\Windows\System32\PSAPI.DLL (75F20000)
+	C:\Windows\System32\COMDLG32.dll (74990000)
+	C:\Windows\SYSTEM32\dbghelp.dll (737E0000)
+	C:\Windows\System32\combase.dll (760E0000)
+	C:\Windows\SYSTEM32\WINMM.dll (73310000)
+	C:\Windows\System32\shcore.dll (770D0000)
+	C:\Windows\System32\SHLWAPI.dll (75310000)
+	C:\Windows\WinSxS\x86_microsoft.windows.common-controls_6595b64144ccf1df_5.82.17763.615_none_588d17fb78ae80f3\COMCTL32.dll (67040000)
+	C:\Windows\System32\SHELL32.dll (75640000)
+	C:\Windows\System32\cfgmgr32.dll (74930000)
+	C:\Windows\SYSTEM32\WINMMBASE.dll (732E0000)
+	C:\Windows\System32\windows.storage.dll (767C0000)
+	C:\Windows\System32\profapi.dll (75F00000)
+	C:\Windows\System32\powrprof.dll (75FD0000)
+	C:\Windows\System32\kernel.appcore.dll (770C0000)
+	C:\Windows\System32\cryptsp.dll (74A90000)
+	C:\Windows\System32\ole32.dll (75210000)
+	C:\Windows\SYSTEM32\dbgcore.DLL (73D60000)
+	C:\Windows\System32\IMM32.DLL (75ED0000)
+	C:\Windows\system32\uxtheme.dll (74210000)
+	C:\Windows\System32\MSCTF.dll (74CD0000)
+	C:\Windows\System32\OLEAUT32.dll (75F30000)
+	C:\Windows\system32\dwmapi.dll (72520000)
+	C:\Windows\System32\CRYPT32.dll (74AD0000)
+	C:\Windows\System32\MSASN1.dll (755A0000)
+	C:\Windows\System32\TextInputFramework.dll (74790000)
+	C:\Windows\System32\CoreUIComponents.dll (70570000)
+	C:\Windows\System32\CoreMessaging.dll (70EA0000)
+	C:\Windows\SYSTEM32\ntmarta.dll (74450000)
+	C:\Windows\SYSTEM32\wintypes.dll (70260000)
+	C:\Windows\System32\clbcatq.dll (75E30000)
+	C:\Windows\system32\dataexchange.dll (74740000)
+	C:\Windows\system32\d3d11.dll (70340000)
+	C:\Windows\system32\dcomp.dll (73BD0000)
+	C:\Windows\system32\dxgi.dll (71160000)
+	C:\Windows\system32\twinapi.appcore.dll (70CF0000)
+	C:\Windows\system32\RMCLIENT.dll (726C0000)
+	C:\Windows\system32\msimtf.dll (74730000)
+	C:\Project\rev_371\Server\scripts\fonline_tla.dll (74720000)
+	C:\Project\rev_371\Server\scripts\fonline_test.dll (73BB0000)
+	C:\Project\rev_371\Server\scripts\utils.dll (73B60000)

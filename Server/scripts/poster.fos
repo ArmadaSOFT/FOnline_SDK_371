@@ -1,0 +1,81 @@
+// Author: rifleman17
+// Постеры, которые можно вешать на стену
+#include "_macros.fos"
+
+#define STR_USED          ( 5 )
+#define STR_WRONG_WALL    ( 6 )
+
+int[] posters = { 615, 616, 617, 618, 619, 620, 621, 623 };
+// разрешенные стены. Первая колонка - код плаката, остальные - стены, на которые можно его вешать
+int[][] allowedWalls =
+{
+    { 615, 5685, 5686, 5687 },
+    { 616, 5685, 5686, 5687 },
+    { 617, 5685, 5686, 5687 },
+    { 618, 5685, 5686, 5687 },
+    { 619, 5685, 5686, 5687 },
+    { 620, 5685, 5686, 5687 },
+    { 621, 5685, 5686, 5687 },
+    { 622, 5685, 5686, 5687 },
+    { 623, 5685, 5686, 5687 }
+};
+
+int[][] posterInfo =
+{
+    { 615, 2, 1000 },
+    { 616, 4, 1500 },
+    { 617, 6, 1700 },
+    { 618, 8, 1800 },
+    { 619, 10, 2000 },
+    { 620, 12, 2020 },
+    { 621, 14, 3000 },
+    { 622, 16, 3500 },
+    { 623, 18, 4000 }
+};
+
+void _BundleInit( Item& item, bool firstTime )
+{
+    if( firstTime )
+    {
+        item.Val0 = posters[ Random( 0, posters.length() - 1 ) ];
+        for( uint i = 0, l = posterInfo.length(); i < l; i++ )
+        {
+            if( posterInfo[ i ][ 0 ] == item.Val0 )
+            {
+                item.Cost = posterInfo[ i ][ 2 ];
+                item.Info = posterInfo[ i ][ 1 ];
+                break;
+            }
+        }
+    }
+    item.SetEvent( ITEM_EVENT_USE, "_BundleUse" );
+    item.Update();
+
+}
+
+bool _BundleUse( Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery )
+{
+    Map@ map = cr.GetMap();
+    if( valid( onScenery ) && valid( map ) )
+    {
+        for( uint i = 0, l = allowedWalls.length(); i < l; i++ )
+        {
+            if( allowedWalls[ i ][ 0 ] == item.Val0 )
+            {
+                for( uint j = 1, k = allowedWalls[ i ].length(); j < k; j++ )
+                {
+                    if( onScenery.ProtoId == allowedWalls[ i ][ j ] )
+                    {
+                        cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_USED );
+                        map.AddItem( onScenery.HexX, onScenery.HexY, item.Val0, 1 );
+                        DeleteItem( item );
+                        return true;
+                    }
+                }
+            }
+        }
+        cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_WRONG_WALL );
+        return true;
+    }
+    return false;
+}

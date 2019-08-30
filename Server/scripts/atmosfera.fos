@@ -1,0 +1,317 @@
+//Класс атмосферных эффектов
+//Тучи + радиоактивные облака
+// atmosfera_class.fos
+
+
+#include "_macros.fos"
+#include "atmosfera_class.fos"
+
+#define ATMO_SPEED             ( 10 * 20 ) //10 sec
+//#define ATMO_SPEED             ( 1 ) //test - быстрые тучки
+#define ATMO_COUNT             ( 2 ) // max-20 min-1
+
+#ifdef __SERVER
+void GetWatherCoord(int& GlobX, int& GlobY, uint atmoId, uint8 WatherType)
+{
+	AtmosferaInfo@ Atmo = GetAtmoInfo( atmoId , WatherType );
+    if( valid( Atmo ) )
+	{
+		GlobX = Atmo.GlobX;
+		GlobY = Atmo.GlobY;
+	}
+	else { GlobX = -10000; }
+}
+
+void GetCloudDamage(uint8& cloudDamage, uint atmoId, uint8 CloudType)
+{
+	AtmosferaInfo@ Atmo = GetAtmoInfo( atmoId , CloudType );
+    if( valid( Atmo ) )
+	{
+		cloudDamage = Atmo.Damage;
+	}
+	else { cloudDamage = 0; }
+}
+
+
+//~run atmosfera unsafe_GetWatherCoord
+void unsafe_GetWatherCoord(Critter& player, int p0, int p1, int p2, string@ cmd_str, array<int>@ param4)
+{
+	int[] GlobXY;
+	GlobXY.resize(0);
+	int[] RadGlobXY;
+	RadGlobXY.resize(0);
+	
+	int GlobX = 0; int GlobY = 0;
+	uint atmoId = 0; uint8 atmoType = 1;
+	
+	for(int i=0,j=ATMO_COUNT;i<j;i++)
+	{
+		atmoId = i; atmoType = 1;
+		GetWatherCoord(GlobX, GlobY, atmoId, atmoType);
+		if(GlobX>-10000)
+		{
+			GlobXY.insertLast(int(GlobX));
+			GlobXY.insertLast(int(GlobY));
+		}
+	}
+
+	for(int i=0,j=ATMO_COUNT;i<j;i++)
+	{
+		atmoId = i; atmoType = 2;
+		GetWatherCoord(GlobX, GlobY, atmoId, atmoType);
+		if(GlobX>-10000)
+		{
+			RadGlobXY.insertLast(GlobX);
+			RadGlobXY.insertLast(GlobY);
+		}
+	}	
+
+	player.RunClientScript( "client_main@GetWatherCoordXY", 0, 0, 0, null, GlobXY );
+	player.RunClientScript( "client_main@GetRadCloudCoordXY", 0, 0, 0, null, RadGlobXY );
+}
+
+uint e_ResetAtmoId( uint[] @ values )
+{
+    AtmosferaInfo@ Atmo = GetAtmoInfo( values[ 0 ], values[ 1 ] );
+    if( valid( Atmo ) ) { Atmo.Erase(); }
+    return 0;
+}
+
+void e_MoveAtmoId( uint AtmoId, uint8 AtmoType )
+{
+    AtmosferaInfo@ Atmo = GetAtmoInfo( AtmoId , AtmoType );
+    if( valid( Atmo ) ) { Atmo.MoveCoord(); }
+}
+
+//тайм ивент двигающий тучи
+uint e_MoveAllCloud( uint[] @ values )
+{
+	for(uint i=0; i<ATMO_COUNT; i++)
+	{
+		for(uint8 j=1; j<=2; j++)
+		{
+			e_MoveAtmoId( i , j );
+		}
+	}
+	RunAllMapEvents();
+		
+	AtmosferaInfo@ Atmo = GetAtmoInfo( 0 , 1 );
+    if( valid( Atmo ) ) { CreateTimeEvent( __FullSecond + ATMO_SPEED, "atmosfera@e_MoveAllCloud", values, true ); }
+	
+	return 0;
+}
+
+//проверка всех карт и установка на них тайм ивентов с событиями. дождь/радиация/и т.д.
+void RunAllMapEvents()
+{
+	Map@[] maps;
+    ::GetAllMaps( 0, maps );
+	
+	int[] CoordCloudX; CoordCloudX.resize(0);
+	int[] CoordCloudY; CoordCloudY.resize(0);
+	int[] CoordRadCloudX; CoordRadCloudX.resize(0);
+	int[] CoordRadCloudY; CoordRadCloudY.resize(0);
+	
+	int GlobX = 0; int GlobY = 0;
+	uint atmoId = 0; uint8 atmoType = 1;
+	
+	for(uint i=0,j=uint(ATMO_COUNT);i<j;i++)
+	{
+		atmoId = i; atmoType = 1;
+		GetWatherCoord(GlobX, GlobY, atmoId, atmoType);
+		if(GlobX>-10000) { CoordCloudX.insertLast(GlobX); CoordCloudY.insertLast(GlobY); }
+	}
+
+	for(uint i=0,j=uint(ATMO_COUNT);i<j;i++)
+	{
+		atmoId = i; atmoType = 2;
+		GetWatherCoord(GlobX, GlobY, atmoId, atmoType);
+		if(GlobX>-10000) { CoordRadCloudX.insertLast(GlobX); CoordRadCloudY.insertLast(GlobY); }
+	}
+	
+    for( uint i = 0, j = maps.length(); i < uint(j); i++ )
+    {
+        Map@   map = maps[ i ];
+        uint16 locPid = map.GetLocation().GetProtoId();
+		uint16 locWorldX = map.GetLocation().WorldX;
+		uint16 locWorldY = map.GetLocation().WorldY;
+		uint8  locRadius = map.GetLocation().Radius;
+
+		atmoType = 1; uint8 iArrDamage=0;
+		int mapNoRain = 0;
+		for(uint iArr=0;iArr<uint(ATMO_COUNT);iArr++)
+		{
+			if( ( (int(locWorldX)-int(locRadius))> ((CoordCloudX[iArr])+20) ) && ( (int(locWorldX)+int(locRadius))< ((CoordCloudX[iArr])+880) ) )
+			{
+				if( ( (int(locWorldY)-int(locRadius))> ((CoordCloudY[iArr])+20) ) && ( (int(locWorldY)+int(locRadius))< ((CoordCloudY[iArr])+430) ) )
+				{
+					// if( LOCATION_IS_CITY( locPid ) )
+					// {
+						//Дождь
+						GetCloudDamage(iArrDamage,uint (iArr),atmoType);
+						map.SetRain(iArrDamage);
+						mapNoRain ++;
+					//}
+				}
+			}
+			
+			//Проверить массив рад.облаков
+			if( ( (int(locWorldX)-int(locRadius))< ((CoordRadCloudX[iArr])+20) ) && ( (int(locWorldX)+int(locRadius))> ((CoordRadCloudX[iArr])+580) ) )
+			{
+				if( ( (int(locWorldY)-int(locRadius))< ((CoordRadCloudY[iArr])+20) ) && ( (int(locWorldY)+int(locRadius))> ((CoordRadCloudY[iArr])+280) ) )
+				{
+					if( LOCATION_IS_CITY( locPid ) )
+					{
+					}
+				}
+			}
+			else
+			{
+				//Отменить эффекты радиации
+			}
+		}
+		if(mapNoRain<1)
+		{
+			//Отменить эффект дождя
+			map.SetRain(0);
+		}
+    }
+}
+
+
+//~run atmosfera RunAllMapEvent 0 0 0
+void RunAllMapEvent( Critter& cr, int p0, int p1, int p2 )
+{
+	Map@[] maps;
+    ::GetAllMaps( 0, maps );
+	
+	int[] CoordCloudX; CoordCloudX.resize(0);
+	int[] CoordCloudY; CoordCloudY.resize(0);
+	int[] CoordRadCloudX; CoordRadCloudX.resize(0);
+	int[] CoordRadCloudY; CoordRadCloudY.resize(0);
+	
+	int GlobX = 0; int GlobY = 0;
+	uint atmoId = 0; uint8 atmoType = 1;
+	
+	for(uint i=0,j=uint(ATMO_COUNT);i<j;i++)
+	{
+		atmoId = i; atmoType = 1;
+		GetWatherCoord(GlobX, GlobY, atmoId, atmoType);
+		if(GlobX>-10000) { CoordCloudX.insertLast(GlobX); CoordCloudY.insertLast(GlobY); }
+	}
+
+	for(uint i=0,j=uint(ATMO_COUNT);i<j;i++)
+	{
+		atmoId = i; atmoType = 2;
+		GetWatherCoord(GlobX, GlobY, atmoId, atmoType);
+		if(GlobX>-10000) { CoordRadCloudX.insertLast(GlobX); CoordRadCloudY.insertLast(GlobY); }
+	}
+	
+    for( uint i = 0, j = maps.length(); i < uint(j); i++ )
+    {
+        Map@   map = maps[ i ];
+        uint16 locPid = map.GetLocation().GetProtoId();
+		uint16 locWorldX = map.GetLocation().WorldX;
+		uint16 locWorldY = map.GetLocation().WorldY;
+		uint8  locRadius = map.GetLocation().Radius;
+
+		atmoType = 1; uint8 iArrDamage=0;
+		int mapNoRain = 0;
+		for(uint iArr=0;iArr<uint(ATMO_COUNT);iArr++)
+		{
+			if( ( (int(locWorldX)-int(locRadius))> ((CoordCloudX[iArr])+20) ) && ( (int(locWorldX)+int(locRadius))< ((CoordCloudX[iArr])+880) ) )
+			{
+				if( ( (int(locWorldY)-int(locRadius))> ((CoordCloudY[iArr])+20) ) && ( (int(locWorldY)+int(locRadius))< ((CoordCloudY[iArr])+430) ) )
+				{
+					// if( LOCATION_IS_CITY( locPid ) )
+					// {
+						//Дождь
+						GetCloudDamage(iArrDamage,uint (iArr),atmoType);
+						map.SetRain(iArrDamage);
+						mapNoRain ++;
+						cr.Say( SAY_NORM, "X:"+locWorldX+"-Y:"+locWorldY+" ("+iArrDamage+")");
+					//}
+				}
+			}
+			
+			//Проверить массив рад.облаков
+			if( ( (int(locWorldX)-int(locRadius))< ((CoordRadCloudX[iArr])+20) ) && ( (int(locWorldX)+int(locRadius))> ((CoordRadCloudX[iArr])+580) ) )
+			{
+				if( ( (int(locWorldY)-int(locRadius))< ((CoordRadCloudY[iArr])+20) ) && ( (int(locWorldY)+int(locRadius))> ((CoordRadCloudY[iArr])+280) ) )
+				{
+					if( LOCATION_IS_CITY( locPid ) )
+					{
+					}
+				}
+			}
+			else
+			{
+				//Отменить эффекты радиации
+			}
+		}
+		if(mapNoRain<1)
+		{
+			//Отменить эффект дождя
+			map.SetRain(0);
+		}
+    }
+}
+
+
+//~run atmosfera _InitCloud 0 0 0
+void _InitCloud( Critter& cr, int p0, int p1, int p2 )
+{
+	uint8 atmoType = 1; uint8 atmoType2 = 2;
+	for(uint i=0;i<ATMO_COUNT;i++)
+	{
+		AtmosferaInfo@ infoTucha = AtmosferaInfo( i, atmoType );
+		AtmosferaInfo@ infoCloud = AtmosferaInfo( i, atmoType2 );
+	}
+	CreateTimeEvent( __FullSecond + ATMO_SPEED + (5 * 20), "atmosfera@e_MoveAllCloud", 0, true );
+	cr.Say( SAY_NORM, "START ATMO EVENT" );
+}
+
+//~run atmosfera _DeleteAll 0 0 0
+void _DeleteAll( Critter& cr, int p0, int p1, int p2 )
+{
+	uint8 atmoType = 1; uint8 atmoType2 = 2;
+	for(uint i=0;i<ATMO_COUNT;i++)
+	{
+		AtmosferaInfo@ Atmo = GetAtmoInfo( i, atmoType );
+		if( valid( Atmo ) ) { Atmo.Erase(); }
+		AtmosferaInfo@ AtmoRad = GetAtmoInfo( i, atmoType2 );
+		if( valid( AtmoRad ) ) { AtmoRad.Erase(); }
+	}
+}
+
+//~run atmosfera _DeleteOne 0 0 0
+void _DeleteOne( Critter& cr, int p0, int p1, int p2 )
+{
+	AtmosferaInfo@ Atmo = GetAtmoInfo( p0, p1 );
+    if( valid( Atmo ) ) { Atmo.Erase(); }
+}
+
+//~run atmosfera _InitOne 0 0 0
+void _InitOne( Critter& cr, int p0, int p1, int p2 )
+{
+	uint atmoId = p0; uint8 atmoType = 1; uint8 atmoType2 = 2; 
+	AtmosferaInfo@ infoTucha = AtmosferaInfo( atmoId, atmoType );
+	AtmosferaInfo@ infoCloud = AtmosferaInfo( atmoId, atmoType2 );
+	
+	cr.Say( SAY_NORM, "START ONE ATMO" );
+}
+
+//~run atmosfera _Coord 0 0 0
+void _Coord( Critter& cr, int p0, int p1, int p2 )
+{
+	int GlobX = 0; int GlobY = 0;
+	uint atmoId = p0; uint8 atmoType = 1; uint8 atmoType2 = 2;
+	GetWatherCoord(GlobX, GlobY, atmoId, atmoType);
+	cr.Say( SAY_NORM, GlobX + " - " + GlobY );
+	GetWatherCoord(GlobX, GlobY, atmoId, atmoType2);
+	cr.Say( SAY_NORM, GlobX + " - " + GlobY );
+}
+//все есть уже
+
+
+#endif

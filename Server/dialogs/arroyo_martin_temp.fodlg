@@ -1,0 +1,252 @@
+[comment]
+Translated by - Iceman,
+version - 03.08.2017
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+6 1010 D _item p PID_LOADED_DICE } 1 D or D _item p PID_MARKED_DECK_OF_CARDS } 1 #
+4 1020 D _param p ST_INTELLECT { 3 #
+16 1030 D _var p loyality = 3 #
+2 1040 @
+2 2000 None 0 #
+0 2010 #
+3 2020 D _var p loyality = 5 R _var p loyality = 0 #
+8 2030 D _var p loyality = 0 #
+10 2040 D _var p loyality > 0 D _var p loyality ! 5 #
+18 2050 D _var p loyality = 4 R _var p loyality = 6 #
+20 2060 D _var p loyality > 0 @
+3 3000 None 0 #
+2 3010 D _param p ST_LUCK { 5 #
+2 3020 D _param p ST_LUCK > 5 R _param p ST_EXPERIENCE + 250 #
+2 3030 D _param p ST_KARMA < 0 #
+2 3040 D _param p ST_KARMA > 0 #
+2 3050 @
+4 4000 None 0 #
+5 4010 D _item p PID_BOTTLE_CAPS } 5 R _item p PID_BOTTLE_CAPS - 5 #
+0 4020 D _item p PID_BOTTLE_CAPS { 0 @
+5 5000 None 0 #
+4 5010 #
+0 5020 @
+6 6000 None 0 #
+7 6010 #
+0 6020 @
+7 7000 None 0 @
+8 8000 None 0 #
+9 8010 @
+9 9000 None 0 #
+0 9010 D _var p loyality = 0 R _var p loyality = 1 #
+0 9020 @
+10 10000 None 0 #
+0 10010 #
+0 10020 D _var p loyality = 1 #
+11 10030 D _item p PID_FUZZY_PAINTING > 0 D _var p loyality = 1 #
+14 10040 D _var p loyality = 2 @
+11 11000 None 0 #
+12 11010 D _param p ST_KARMA < 0 #
+12 11020 #
+12 11030 D _param p ST_KARMA > 0 @
+12 12000 None 0 #
+13 12010 D _param p SK_BARTER } 100 #
+0 12020 D _var p loyality = 1 D _item p PID_FUZZY_PAINTING > 0 R _item p PID_BOTTLE_CAPS + 500 R _var p loyality = 2 R _param p ST_EXPERIENCE + 1000 R _item p PID_FUZZY_PAINTING - 1 R _item p PID_DECK_OF_CARDS + 1 @
+13 13000 None 0 #
+0 13010 D _var p loyality = 1 D _item p PID_FUZZY_PAINTING > 0 R _item p PID_BOTTLE_CAPS + 1000 R _var p loyality = 2 R _param p ST_EXPERIENCE + 1500 R _item p PID_FUZZY_PAINTING - 1 R _item p PID_DECK_OF_CARDS + 1 #
+0 13020 @
+14 14000 None 0 #
+15 14010 #
+0 14020 @
+15 15000 None 0 #
+0 15010 D _var p loyality = 2 R _var p loyality = 3 #
+0 15020 @
+16 16000 None 0 #
+10 16010 #
+0 16020 #
+17 16030 D _item p PID_DECK_OF_TRAGIC_CARDS } 1 D _var p loyality = 3 R _item p PID_DECK_OF_TRAGIC_CARDS - 1 R _param p ST_EXPERIENCE + 1000 R _var p loyality = 4 R _item p PID_BOTTLE_CAPS + 500 R _item p PID_BIG_BOOK_OF_SCIENCE + 1 @
+17 17000 None 0 #
+0 17010 D _param p ST_KARMA < 0 #
+0 17020 D _param p ST_KARMA } 0 @
+18 18000 None 0 #
+0 18010 #
+19 18020 D _param p SK_BARTER } 100 R _param p ST_EXPERIENCE + 1250 #
+19 18030 D _param p SK_SPEECH } 100 R _param p ST_EXPERIENCE + 1250 @
+19 19000 None 0 #
+0 19010 D _param p ST_KARMA } 0 #
+0 19020 D _param p ST_KARMA < 0 @
+20 20000 None 0 #
+0 20010 #
+21 20020 D _script dungepvp4@dung4x4_CheckEventRaider 0  @
+21 21000 None 0 #
+0 21010 #
+22 21020 D _script dungepvp4@dung4x4_CheckAccess 0  R _script dungepvp4@dunge4x4_CheckGroupRaider 0  @
+22 22000 None 0 &
+
+[russ]
+{100}{}{Мартинос}
+{200}{}{Вы видите: Мартиноса}
+{210}{}{Маленький, приветливый мексиканец с маслянистыми хитрыми глазами}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{с шулерскими костями}
+{1020}{}{тупой}
+{1030}{}{колода трагик}
+{1040}{}{обычный}
+{2000}{}{Привествую амиго в лучшем казино пустоши!}
+{2010}{}{(Кивнув, уходите)}
+{2020}{}{А ты кто?}
+{2030}{}{Неплохое казино.}
+{2040}{}{Поговорим, Мартинос?}
+{2050}{}{Ввел игру Трагик?}
+{2060}{}{Лучшее казино говоришь. А на пороге почему красная дорожка? Вчера заходил - синяя была...}
+{3000}{}{Я Мартинос, владелец этого прекрасного казино, делаю людей богаче. (Хитро подмигивает вам)}
+{3010}{}{Будем знакомы, приветствую.}
+{3020}{}{Если человек удачлив. Приветствую, Мартинос.}
+{3030}{}{Мне-то не рассказывай, хе-хе.}
+{3040}{}{Богаче людей делают добрые дела.}
+{3050}{}{А я просто @pname@.}
+{4000}{}{Амиго! Я вижу, что тебе повезет, кинем кубик?}
+{4010}{}{Ага. (Ставите 5 монет)}
+{4020}{}{Нету.}
+{5000}{}{Ох, неповезло, но это временно, теперь приз удваивается.}
+{5010}{}{И?}
+{5020}{}{Писать надо.}
+{6000}{}{(Лицо Мартиноса меняется)
+Немедленно уходи, сюда нельзя с таким дерьмом.}
+{6010}{}{С каким дерьмом?}
+{6020}{}{Хорошо, ухожу.}
+{7000}{}{Пошел вон!}
+{8000}{}{Лучшее в окрестностях! Пройдет год и ты вообще его не узнаешь.}
+{8010}{}{А что будет?}
+{9000}{}{Я улучшу интерьер. (Показывает) Вот там хочу повесить какую-нибудь картину, они сразу преображают помещение.}
+{9010}{}{О, если найду, принесу тебе.}
+{9020}{}{Удачи.}
+{10000}{}{Я всегда рад разговору! А потом можно и картишки перекинуть. (Подмигивает)}
+{10010}{}{До встречи.}
+{10020}{}{Про картину помню, если найду - принесу.}
+{10030}{}{Вот такая картина подойдет?}
+{10040}{}{Как идут дела?}
+{11000}{}{(Мартинос берет в руки картину и разглядывает её горящими глазами)
+И сколько хочешь, амиго, за эту мазню?}
+{11010}{}{А сколько есть?}
+{11020}{}{А сколько дашь?}
+{11030}{}{Во сколько оценишь?}
+{12000}{}{Дам пятьсот монет и колоду карт.}
+{12010}{}{А если тысячу и колоду?}
+{12020}{}{Нормально, меняемся.}
+{13000}{}{Хорошо, пусть будет так. Меняемся?}
+{13010}{}{Нормально, меняемся.}
+{13020}{}{Я еще подумаю.}
+{14000}{}{Жаловаться грех. Хотя поток клиентов слегка сжижился.}
+{14010}{}{Почему?}
+{14020}{}{Будет и на твой улице праздник.}
+{15000}{}{Тут увлеклись какой-то игрой. Вроде как карточная Трагик. Мне бы колоду карт, чтобы понять, что это вообще такое. Я бы тут даже столик выделил под игру. 
+Пусть хоть пиво или нюку берут.}
+{15010}{}{Хорошо, окажу тебе услугу, за разумную цену.}
+{15020}{}{Будет и на твой улице праздник.}
+{16000}{}{Как дела с добычей колоды Трагик? Я очень жду, амиго.}
+{16010}{}{Позже, сейчас разговор есть.}
+{16020}{}{В поисках.}
+{16030}{}{Держи, пришлось попотеть.}
+{17000}{}{Благодарю, амиго! Вот тебе в награду немного денег и вот эта пухлая книга, мне она ни к чему.}
+{17010}{}{Возьми убоже, что мне негоже, значит. Ну, ок.}
+{17020}{}{Благодарю.}
+{18000}{}{Конечно! Целый стол выделил. Но все равно редко приходят, это меня огорчает.}
+{18010}{}{Что сделать, бывает.}
+{18020}{}{Так ты рекламу организуй, акцию какую-нибудь, и денежка потечет.}
+{18030}{}{Ты поговори с людьми, найди аргументы, чтобы они у тебя собирались.}
+{19000}{}{Спасибо за совет, амиго. Я постараюсь.}
+{19010}{}{Все получится, Мартинес.}
+{19020}{}{Получится, если булками шевелить.}
+{20000}{}{Теперь она видимо всегда красной останется... Проигрался вчера один типок тут. Мы вначале решили из него всю душу вытрясти, дабы он поддельные векселя не предъявлял впреть. Знаеш банду Карлоса? Так вот оказалось, что он один из них. Много чего оно натрепать успел пока его не вышвырнули из казино}
+{20010}{}{Да уж. Бывают в жизни неудачи (выход)}
+{20020}{}{Что же этот оболтус мог разболтать то такого интересного?}
+{21000}{}{Да много чего говорил. Верить или нет я не знаю, но сказал, что есть у него информация о налёте банды Карлоса на склад тут неподалеку. Он ещё охранников наших хотел уболтать с ними пойти на дело. Угрожал еще чтобы никто ничего не болтал чего узнали от него.}
+{21010}{}{Пригугнули Вы его знатно! Раз даже глупости стал нести (выход)}
+{21020}{}{Надо поговорить с охранной по этому поводу}
+{22000}{}{Эй, Джон! Подойди сюда. Расскажи ребятам, что там вчера тот утырок в бреду нёс про налёт который Карлос в обед решил устроить.}
+
+[engl]
+{100}{}{Martinos}
+{200}{}{You see: Martinos}
+{210}{}{A small, affable Mexican with oily, cunning eyes}
+{1000}{}{Pre-Installation Settings}
+{1010}{}{with cheerful bones}
+{1020}{}{dumb}
+{1030}{}{Tragedy deck}
+{1040}{}{normal}
+{2000}{}{Welcome, Amigo, at the bonito wasteland casino!}
+{2010}{}{[Nodding, go away]}
+{2020}{}{Who are you?}
+{2030}{}{Not a bad casino.}
+{2040}{}{Let's talk, Martinos?}
+{2050}{}{Introduced the game Tragic?}
+{2060}{}{The best casino you say. And why on the threshold is the red carpet? Yesterday came in - the blue was ...}
+{3000}{}{I'm Martinos, the owner of this bonito casino, I make personas richer. [Cunningly winks to you]}
+{3010}{}{It`s nice to meet you.}
+{3020}{}{If a person is lucky. Greetings, Martinos.}
+{3030}{}{Don`t tell me anything, hehe.}
+{3040}{}{You can become rich only by doing good things.}
+{3050}{}{And I'm just @pname@.}
+{4000}{}{Amigo! I see that you're suerte... lucky, so we can roll the dice, right?}
+{4010}{}{Yeah. [Bet 5 coins]}
+{4020}{}{No.}
+{5000}{}{Oh, it's unfortunate, but it's temporary, now the prize is doubling.}
+{5010}{}{And?}
+{5020}{}{You should write.}
+{6000}{}{[Martinos' face changes]
+Go away immediately, you can not come here with such shit.}
+{6010}{}{What shit?}
+{6020}{}{All right, I'm leaving.}
+{7000}{}{Get out!}
+{8000}{}{The best in the suburbs! A year will pass and you will not even recognize it.}
+{8010}{}{What will happen?}
+{9000}{}{I'll improve the interior. [Shows]
+Here I want to hang some picture, they immediately transform the room.}
+{9010}{}{Oh, if I find it, I'll bring it to you.}
+{9020}{}{Good luck}
+{10000}{}{I'm always glad to talk! And then we can throw the cards. [Winks]}
+{10010}{}{See you later.}
+{10020}{}{I remember about the picture. If I find it - I'll bring it.}
+{10030}{}{Is this a good picture?}
+{10040}{}{How's it going?}
+{11000}{}{[Martinos takes the picture and looks at it with burning eyes]
+And how much do you want, Amigo, for this cuadro?}
+{11010}{}{And how much do you have?}
+{11020}{}{And how much will you pay?}
+{11030}{}{How much is it cost}
+{12000}{}{I'll give you five hundred coins and a deck of cards.}
+{12010}{}{What about a thousand and a deck?}
+{12020}{}{Normal, change.}
+{13000}{}{All right, so be it. Are we changing?}
+{13010}{}{Normal, change.}
+{13020}{}{I'll think about it.}
+{14000}{}{Complaining is a big sin. Although the flow of customers has slightly faded.}
+{14010}{}{Why?}
+{14020}{}{There'll be a holiday on your street, too.}
+{15000}{}{They got carried away with some kind of game. Seems they call it "Tragic". I would like to have a deck of cards to understand what it`s all about. I would even give a table for the game.
+Let personas take beer or nuka.}
+{15010}{}{All right, I'll do you a favor, for a reasonable price.}
+{15020}{}{There will be a holiday on your street, too.}
+{16000}{}{How's it going with getting the Tragic deck? I'm really waiting, Amigo.}
+{16010}{}{Later, we need to talk now.}
+{16020}{}{I`m in search.}
+{16030}{}{Here you are, it was not easy.}
+{17000}{}{Gracias, Amigo! Here's a reward: some dinero and this grande libro, I don`t need it.}
+{17010}{}{I hope for APA or motor at least. Well, ok.}
+{17020}{}{Gracias.}
+{18000}{}{Of course! I singled out the whole table for it. But people still come rarely, it upsets me.}
+{18010}{}{Shit happens.}
+{18020}{}{So you need to organize the advertising, some event, naked girls and boys, free beer, maybe drugs and the money will flow.}
+{18030}{}{You talk to people, find arguments to get you together.}
+{19000}{}{Gracias for the advice, Amigo. I will try to.}
+{19010}{}{It's all right, Martinez.}
+{19020}{}{It will work if you move it with rolls.}
+{20000}{}{Now it seems she will always remain red ... Yesterday, there was a loss of a tip here. At first, we decided to shake the whole soul out of him so that he would not present counterfeit bills of exchange. Know the gang of Carlos? So it turned out that he was one of them. He managed to rat a lot of things until he was thrown out of the casino.}
+{20010}{}{Yeah. There are failures in life (exit)}
+{20020}{}{What could this idiot do to let something so interesting?}
+{21000}{}{Yes, a lot of things said. Believe it or not, I don’t know, but I said that he has information about the raid of Carlos’s gang on a warehouse here nearby. He still wanted our guards to talk with them. No one else was threatened so much that he knew anything from him.}
+{21010}{}{You have charmed him notably! Once even nonsense began to bear (exit)}
+{21020}{}{We must talk to the security about this.}
+{22000}{}{Hey John! Come here. Tell the guys that there yesterday he lurked deliriously about the raid that Carlos decided to make at lunch.}
+

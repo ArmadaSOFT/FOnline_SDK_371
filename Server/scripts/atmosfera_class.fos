@@ -1,0 +1,128 @@
+//Класс AtmosferaInfo
+// atmosfera_class.fos
+
+#ifdef __SERVER
+ #include "_macros.fos"
+ #include "serializator.fos"
+#endif
+
+#define _AnyDataKey        # ( atmoId , type )( "Atmosfera_" + atmoId + type )
+
+AtmosferaInfo@ GetAtmoInfo( uint atmoId, uint8 type )
+{
+    string key = _AnyDataKey( atmoId, type );
+    if( IsAnyData( key ) ) { return AtmosferaInfo( key ); }
+    return null;
+}
+
+class AtmosferaInfo
+{
+    AtmosferaInfo( string key )
+    {
+        this.Load( key );
+    }
+
+    AtmosferaInfo( uint & atmoId, uint8 & type )
+    {
+        string key = _AnyDataKey( atmoId, type );
+        if( IsAnyData( key ) )
+        {
+            this.Load( key );
+        }
+        else
+        {
+            this.AtmoId = atmoId;
+			this.AtmoType = type;
+            GenerateCoord();
+			uint[] values = { this.AtmoId, this.AtmoType };
+            this.Save( key );
+        }
+    }
+	
+    uint   AtmoId;
+	uint8  AtmoType;
+    int    GlobX;
+    int    GlobY;
+    uint16 Speed;
+	int    VectorX;
+	int    VectorY;
+	uint16 Radius;
+	uint8  Damage;
+
+    // Сериализация
+    void Save( string key )
+    {
+        Serializator save;
+        save.Set( this.AtmoId );
+		save.Set( this.AtmoType );
+        save.Set( this.GlobX);
+        save.Set( this.GlobY );
+        save.Set( this.Speed );
+		save.Set( this.VectorX );
+		save.Set( this.VectorY );
+        save.Set( this.Radius );
+		save.Set( this.Damage );
+        save.Save( key );
+    }
+
+    bool Load( string key )
+    {
+        Serializator load;
+        if( !IsAnyData( key ) || !load.Load( key ) )
+            return false;
+        load.Get( this.AtmoId );
+		load.Get( this.AtmoType );
+        load.Get( this.GlobX );
+        load.Get( this.GlobY );
+        load.Get( this.Speed );
+		load.Get( this.VectorX );
+		load.Get( this.VectorY );
+        load.Get( this.Radius );
+        load.Get( this.Damage );
+        return true;
+    }
+
+    void Erase()
+    {
+        string key = _AnyDataKey( this.AtmoId, this.AtmoType );
+        if( IsAnyData( key ) )
+		{
+			this.Load( key );
+            EraseAnyData( key );
+		}
+    }
+
+    void GenerateCoord()
+    {
+        int newGlobX = Random(-100,1400);
+		int newGlobY = Random(-100,1500);
+        this.GlobX = newGlobX;
+		this.GlobY = newGlobY;
+		uint16 rSpeed = Random(1,3);
+		this.Speed = rSpeed;
+		int rVectorX = Random(-1,1);
+		int rVectorY = Random(-1,1);
+		this.VectorX = rVectorX;
+		this.VectorY = rVectorY;
+		uint16 rRadius = Random(1,20);
+		this.Radius = rRadius;
+		uint8 rDamage = Random(1,250);
+		this.Damage = rDamage;
+    }
+	
+	void MoveCoord()
+    {
+		int randomX = Random(-1,1);
+		int randomY = Random(-1,1);
+		this.GlobX += (randomX*this.Speed)+this.VectorX;
+		this.GlobY += (randomY*this.Speed)+this.VectorY;
+		//x-1300 y-1400
+		if( this.GlobX<=-900 ) { this.GlobX = 2200-(randomX*this.Speed)-this.VectorX; } else if( this.GlobX>=2200 ) { this.GlobX = -900+(randomX*this.Speed)+this.VectorX; }
+		if( this.GlobY<=-450 ) { this.GlobY = 1625-(randomY*this.Speed)-this.VectorY; } else if( this.GlobY>=1625 ) { this.GlobY = -450+(randomY*this.Speed)+this.VectorY; }
+		
+		int randomDamage = Random(-5,5);
+		if( ((int(this.Damage)+randomDamage)<0) || ((int(this.Damage)+randomDamage)>250) ){ uint8 rDamage = Random(1,250); this.Damage = rDamage; }else{ this.Damage = uint8(int(this.Damage)+randomDamage); }
+		
+		this.Save( _AnyDataKey( this.AtmoId, this.AtmoType ) );
+	}
+}

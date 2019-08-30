@@ -1,0 +1,102 @@
+[comment]
+
+
+[data]
+lang=russ engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _param p ST_INTELLECT > 3 D _var p loyality = 5 #
+3 1020 D _param p ST_INTELLECT < 4 #
+5 1030 @
+2 2000 None 0 #
+0 2010 #
+4 2020 R _var p loyality = 0 @
+3 3000 None 0 @
+4 4000 None 0 #
+0 4010 #
+5 4020 @
+5 5000 None 0 #
+0 5010 #
+6 5020 #
+9 5030 D _script dungepvp4@dung4x4_CheckEvent 0  @
+6 6000 None 0 #
+0 6010 #
+7 6020 @
+7 7000 None 0 #
+0 7010 #
+8 7020 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+0 9010 #
+10 9020 D _script dungepvp4@dung4x4_CheckAccess 0  R _script dungepvp4@dunge4x4_CheckGroup 0  @
+10 10000 None 0 &
+
+[russ]
+{100}{}{Шериф Тодд}
+{200}{}{Вы видите: шерифа Тодда}
+{210}{}{Мощный мужчина с каменным выражением лица.}
+{1000}{}{Преддиалоговые установки}
+{1010}{}{Незнаком}
+{1020}{}{тупой}
+{1030}{}{обычный диалог}
+{2000}{}{Я шериф Тодд, а ты кто такое? С какой целью прибыли в наш город?}
+{2010}{}{Извините, ухожу.}
+{2020}{}{Я @pname@. От меня не будет проблем, шериф.}
+{3000}{}{Кругом и шагом марш, идиот.}
+{4000}{}{(Шериф отворачивается, показывая всем видом, что разговор окончен)}
+{4010}{}{(Уходите)}
+{4020}{}{Шериф!}
+{5000}{}{А, это ты. Чего болтаешься? Заняться нечем?}
+{5010}{}{Уже ухожу.}
+{5020}{}{(Замечаете карту с кучей кружочков). А что это, шериф?}
+{5030}{}{Дико извиняюсь, но ходят слухи о том, что на одном из форпостов требуются крепкие ребята для охраны?}
+{6000}{}{Не твое дело. Форпосты это. Заброшенные.}
+{6010}{}{Ааа. Понятно.}
+{6020}{}{Форпосты? Это как?}
+{7000}{}{Обычные форпосты, связанные специальной сетью, там даже компьютеры еще рабочие.}
+{7010}{}{Спасибо за объяснение.}
+{7020}{}{А как туда попасть?}
+{8000}{}{Сейчас Прайсон запустить сеть и можно по рации поймать. О, так он уже запустил (смотрит на мигающий пип-бой у себя на руке). Посмотрим, что выйдет.
+А ты чего? Еще тут? Шагоом марш!}
+{8010}{}{Уже ухожу.}
+{9000}{}{Есть такое дело. Вчера была вечеринка и одна из смен никак не может пройти мед.осмотр чтобы получить доступ на объект. Если у тебя есть команда и нужны крышки, то могу предложить поработать по контракту временно.}
+{9010}{}{Дело серъезное. Нужно поговорить с ребятами (выход)...}
+{9020}{}{Посмотри по сторонам! У тебя сегодня удачный день. Мы готовы подписаться на эту работёнку}
+{10000}{}{(Внимательно осматривает тебя и твою компанию) Ну чтож. Сейчас достану бланки, нужно будет их подписать и в районе обеда быть здесь. Вас проводят на охраняемый объект.}
+
+[engl]
+{100}{}{Todd}
+{200}{}{You see: sheriff todd Todd}
+{210}{}{A strong man with a strong face. Brick face.}
+{1000}{}{Pre-installation installations}
+{1010}{}{Do not know}
+{1020}{}{stupid}
+{1030}{}{regular dialogue}
+{2000}{}{I'm sheriff Todd and what are you? What's your reason for visiting our city?}
+{2010}{}{Sorry, sir, I should go.}
+{2020}{}{My name is @pname@. Won't cause any problem, sheriff.}
+{3000}{}{Just turn around and walk away, idiot.}
+{4000}{}{(Sheriff turns away, showing you that dialogue is over)}
+{4010}{}{(Leave)}
+{4020}{}{Sheriff!}
+{5000}{}{Ah, it's you. Hanging around, huh? Have nothing to do?}
+{5010}{}{I'm leaving now.}
+{5020}{}{(Notice the map with a bunch of circles). What is it, sheriff?}
+{5030}{}{Do you need strong guys at one of the facilities to protect? There were such rumors.}
+{6000}{}{None of your business. Outposts it. Abandoned.}
+{6010}{}{Aah.}
+{6020}{}{Outposts? What is it like?}
+{7000}{}{Text of the dialog}
+{7010}{}{Thanks for the explanation.}
+{7020}{}{And how to get there?}
+{8000}{}{Now Prison to launch the network and on the radio to catch. Oh, so he's already launched (looking at the flashing PIP-boy on your arm). Let's see what happens.
+And what are you doing? Still here? March!}
+{8010}{}{I'm leaving.}
+{9000}{}{There is such a thing. Yesterday there was a party and one of the shifts cannot undergo medical examination in any way in order to gain access to the object. If you have a team and need covers, then I can offer to work on the contract temporarily.}
+{9010}{}{Serious case. Need to talk to the guys (exit)}
+{9020}{}{Look around! You have a good day today. We are ready to subscribe to this job.}
+{10000}{}{(Attentively examines you and your company) Well, well. Now I’ll get the forms, I’ll need to sign them and be here in the lunch area. You are escorted to a protected facility.}
+

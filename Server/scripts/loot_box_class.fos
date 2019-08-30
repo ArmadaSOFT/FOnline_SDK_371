@@ -1,0 +1,528 @@
+﻿// Скрипт подбора пароля 
+// Генерится последовательность из 4 неповторяющихся цифр, игроку дается от 5 до 7 попыток угадать последовательность
+#include "_macros.fos"
+#include "serializator.fos"
+#include "_animation.fos"
+//#include "_client_defines.fos"
+
+#define QUEST_EXPIRIENCE   ( 1000 )                      // Количество опыта за взлом ящика
+#define VAR_SCEN_MAPID     ( LVAR_loot_box_map_id )      // Номер переменной с ид карты, на которой стоит сценери
+#define VAR_SCEN_PROTO     ( LVAR_loot_box_proto )       // Номер переменной кодом протоипа сценери
+#define VAR_SCEN_HEX_X     ( LVAR_loot_box_hex_x )       // Номер переменной с координатой по оси икс объекта сценери
+#define VAR_SCEN_HEX_Y     ( LVAR_loot_box_hex_y )       // Номер переменной с координатой по оси игрек объекта сценери
+#define STR_INFO           ( 80100 )                     // Символ "*" означает, что цифра присутствует в коде, но неверно указано ее положение.\nСимвол "-" означает, что цифра не используется в коде.\nДо блокировки осталось@lex num@ попыток.
+#define STR_BLOCKED        ( 80101 )                     // Активирована защита от взлома. Система заблокирована
+#define STR_SOLVED         ( 80102 )                     // ** Вам удалось обойти систему защиты! **
+#define STR_HEADER         ( 80103 )                     // Взлом пароля
+#define STR_ANSWER         ( 80104 )                     // Введено: @lex pcode@ //Система: @lex code@
+#define STR_LOOT           ( 80105 )                     // Вы успешно забрали все вещи из ящика
+#define _GetNumbers        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }
+#define MAX_CODE_LENGTH    ( 4 )
+#define MAX_SOLVE_TRIES    ( Random( 5, 7 ) )
+#define TIME_RESET         ( 10 * 60 * 20 )          // 10 реальных минут. После этого ящик можно снова попробовать взломать - генерится новый код или удаляется запись из AnyData, если карта и сундук не существует.
+#define _AnyDataKey        # ( mapId, playerId, sceneryPid, sceneryX, sceneryY )( "LootBox_" + mapId + playerId + sceneryPid + sceneryX + sceneryY )
+
+//На реквиеме закоментить
+#define PID_FRAG_SHOTGUN                     ( 7907 )
+#define PID_SHAITAN                          ( 7908 )
+#define PID_NAILS_BIG                        ( 8122 )
+#define PID_GASLASER                         ( 7917 )
+#define PID_C_NAILGUN                        ( 7918 )
+#define PID_THROWING_KNIFE_MK2               ( 8106 )
+#define PID_HAND_LAUNCHER                    ( 898 )
+#define PID_PG_FRAG                          ( 651 )
+
+#define PID_LOOT_BOX ( 199 )
+
+// Бить током после каждой неудачной попытки в зависимости от навыка науки и уровня
+#define _GetMinusHP      # ( player_sc, player_lvl ) ( floor( player_sc * player_lvl / 40 ) )
+
+LootBoxInfo@ GetBoxInfo( Critter& player )
+{
+    GameVar @mapId = GetLocalVar( VAR_SCEN_MAPID, player.Id );
+    GameVar @hexX  = GetLocalVar( VAR_SCEN_HEX_X, player.Id );
+    GameVar @hexY  = GetLocalVar( VAR_SCEN_HEX_Y, player.Id );
+    GameVar @proto = GetLocalVar( VAR_SCEN_PROTO, player.Id );
+    if( !valid( mapId ) ||
+        !valid( proto ) ||
+        !valid( hexY ) ||
+        !valid( hexY ) ||
+        mapId == 0 ||
+        !valid( player.GetMap() ) ||
+        mapId != player.GetMap().Id ||
+        proto == 0 ||
+        hexY == 0 ||
+        hexY == 0 ||
+        GetDistantion( player.HexX, player.HexY, hexX.GetValue(), hexY.GetValue() ) > 3 )
+        return null;
+    return GetBoxInfo( mapId.GetValue(), player.Id, proto.GetValue(), hexX.GetValue(), hexY.GetValue() );
+}
+
+LootBoxInfo@ GetBoxInfo( int mapId, int playerId, int16 sceneryPid, int16 sceneryX, int16 sceneryY )
+{
+    string key = _AnyDataKey( mapId, playerId, sceneryPid, sceneryX, sceneryY );
+    if( IsAnyData( key ) ) { return LootBoxInfo( key ); }
+    return null;
+}
+
+class LootBoxInfo
+{
+    LootBoxInfo( string key )
+    {
+        this.Load( key );
+    }
+
+    LootBoxInfo( Map & map, Critter & Player, Scenery & box, bool FirstTime )
+    {
+        string key = _AnyDataKey( map.Id, Player.Id, box.ProtoId, box.HexX, box.HexY );
+        if( IsAnyData( key ) )
+        {
+            this.Load( key );
+        }
+        else
+        {
+            this.MapId = map.Id;
+			this.PlayerId = Player.Id;
+            this.BoxPid = box.ProtoId;
+            this.HexX = box.HexX;
+            this.HexY = box.HexY;
+            GenerateCode();
+            if( FirstTime )
+			{
+				uint[] values = { this.MapId, this.PlayerId, this.BoxPid, this.HexX, this.HexY };
+				this.RunningEventId = CreateTimeEvent( __FullSecond + TIME_RESET, "e_ResetBox", values, true );
+			}
+            this.Save( key );
+        }
+    }
+	
+    LootBoxInfo( Map & map, Critter & Player, Item & box, bool FirstTime )
+    {
+        string key = _AnyDataKey( map.Id, Player.Id, box.GetProtoId(), box.HexX, box.HexY );
+        if( IsAnyData( key ) )
+        {
+            this.Load( key );
+        }
+        else
+        {
+            this.MapId = map.Id;
+			this.PlayerId = Player.Id;
+            this.BoxPid = box.GetProtoId();
+            this.HexX = box.HexX;
+            this.HexY = box.HexY;
+            GenerateCode();
+            if( FirstTime )
+			{
+				uint[] values = { this.MapId, this.PlayerId, this.BoxPid, this.HexX, this.HexY };
+				this.RunningEventId = CreateTimeEvent( __FullSecond + TIME_RESET, "e_ResetBox", values, true );
+			}
+            this.Save( key );
+        }
+    }
+
+    uint   MapId;
+	uint   PlayerId;
+    uint16 BoxPid;
+    uint16 HexX;
+    uint16 HexY;
+    uint[] Code;
+    uint8  TriesLeft;
+	uint   RunningEventId;
+
+    string SCode()
+    {
+        string code = "";
+        for( uint i = 0, l = this.Code.length(); i < l; i++ )
+            code += this.Code[ i ];
+        return code;
+    }
+
+    // Сериализация
+    void Save( string key )
+    {
+        Serializator save;
+        save.Set( this.MapId );
+		save.Set( this.PlayerId );
+        save.Set( this.BoxPid );
+        save.Set( this.HexX );
+        save.Set( this.HexY );
+        save.Set( this.Code );
+        save.Set( this.TriesLeft );
+		save.Set( this.RunningEventId );
+        save.Save( key );
+    }
+
+    bool Load( string key )
+    {
+        Serializator load;
+        if( !IsAnyData( key ) || !load.Load( key ) )
+            return false;
+        load.Get( this.MapId );
+		load.Get( this.PlayerId );
+        load.Get( this.BoxPid );
+        load.Get( this.HexX );
+        load.Get( this.HexY );
+        load.Get( this.Code );
+        load.Get( this.TriesLeft );
+		load.Get( this.RunningEventId );
+        return true;
+    }
+
+    void Erase()
+    {
+        string key = _AnyDataKey( this.MapId, this.PlayerId, this.BoxPid, this.HexX, this.HexY );
+        if( IsAnyData( key ) )
+		{
+			//Удалить тайм ивент
+			this.Load( key );
+			::EraseTimeEvent( this.RunningEventId );
+            EraseAnyData( key );
+		}
+    }
+
+    void GenerateCode()     // Генерирует новый код и сбрасывает число оставшихся попыток
+    {
+        uint[] numbers = _GetNumbers;
+        uint index = 0;
+        this.Code.resize( 0 );
+        while( this.Code.length() < MAX_CODE_LENGTH )
+        {
+            index = Random( 0, numbers.length() - 1 );
+            this.Code.insertLast( numbers[ index ] );
+            numbers.removeAt( index );
+        }
+        this.TriesLeft = MAX_SOLVE_TRIES;
+    }
+
+    // Попытка угадать пароль
+    // Возвращает true - если пароль угадан, false - если нет
+    // Правильно угаданный символ отображается как есть
+    // Неправильно угаданный - отображается минус
+    // Позиция не угадана, угадана цифра - отображается звезда
+    bool TrySolveBox( Critter& player, string codePlayer, string& codeAnswer )
+    {
+        if( TriesLeft < 1 )
+        {
+            player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_BLOCKED );
+            return false;
+        }
+        string charPlayer = "";
+        string charReal = "";
+        string codeReal = this.SCode();
+        bool   charFound = false;
+        codeAnswer = "";
+
+        for( uint i = 0, l = codePlayer.length(); i < MAX_CODE_LENGTH && i < l; i++ )
+        {
+            charFound = false;
+            charPlayer = codePlayer[ i ];
+            for( uint j = 0, len = codeReal.length(); j < MAX_CODE_LENGTH && j < len && !charFound; j++ )
+            {
+                charReal = codeReal[ j ];
+                if( charReal == charPlayer ) { charFound = true; if( i == j ) {codeAnswer += this.Code[ j ]; } else { codeAnswer += "*"; } }
+            }
+            if( !charFound ) codeAnswer += "-";
+        }
+        this.TriesLeft--;
+        this.Save( _AnyDataKey( this.MapId, this.PlayerId, this.BoxPid, this.HexX, this.HexY ) );
+        if( codeReal == codeAnswer )
+        {
+            this.TriesLeft = 0;
+            this.Save( _AnyDataKey( this.MapId, this.PlayerId, this.BoxPid, this.HexX, this.HexY ) );
+            return true;
+        }
+        return false;
+    }
+}
+
+uint e_ResetBox( uint[] @ values )
+{
+    LootBoxInfo@ Box = GetBoxInfo( values[ 0 ], values[ 1 ], values[ 2 ], values[ 3 ], values[ 4 ] );
+    if( valid( Box ) )
+    {
+        if( valid( GetMap( values[ 0 ] ) ) )
+        {
+            Box.GenerateCode();
+            Box.Save( _AnyDataKey( values[ 0 ], values[ 1 ], values[ 2 ], values[ 3 ], values[ 4 ] ) );
+            return TIME_RESET;
+        }
+        else { Box.Erase(); }
+    }
+    return 0;
+}
+
+bool s_Use( Critter& player, Scenery& scenery, int skill, Item@ item )
+{
+    // на всякий случай...
+    if( !player.IsPlayer() ) return false;
+    // пока не допускается использование предметов
+	// в дальнейшем сделаю использование электронных отмычек мк2 чтобы давало больше на 3 попытки
+    if( valid( item ) )
+        return false;
+
+    if( skill == SK_SCIENCE )
+    {
+		//Найти тайм ивент
+		bool FirstTime = true;
+        player.Wait( 1000 );
+        LootBoxInfo@ info = LootBoxInfo( player.GetMap(), player, scenery, FirstTime );
+        GameVar             @mapId = GetLocalVar( VAR_SCEN_MAPID, player.Id );
+        GameVar             @hexX  = GetLocalVar( VAR_SCEN_HEX_X, player.Id );
+        GameVar             @hexY  = GetLocalVar( VAR_SCEN_HEX_Y, player.Id );
+        GameVar             @proto = GetLocalVar( VAR_SCEN_PROTO, player.Id );
+        if( !valid( info ) || !valid( mapId ) || !valid( hexX ) || !valid( hexY ) )
+            return false;
+        if( info.TriesLeft < 1 )
+        {
+            player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_BLOCKED );
+            return true;
+        }
+        else { player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_INFO, "$num" + info.TriesLeft ); }
+        mapId = player.GetMap().Id;
+        hexX = scenery.HexX;
+        hexY = scenery.HexY;
+        proto = scenery.ProtoId;
+        player.ShowScreen( SCREEN_SAY, 0, "answer_TrySolve" );
+        player.SayMsg( SAY_SAY_TITLE, TEXTMSG_TEXT, STR_HEADER );
+        player.Say( SAY_SAY_TEXT, "****" );
+        return true;
+    }
+    return false;
+}
+
+//Init Items-BOX
+
+// void _CreateBox( Map& map, uint16@ hx, uint16@ hy)
+// {
+    // Item@ box = map.AddItem( hx, hy, PID_LOOT_BOX, 1 );
+    // if( !valid( box ) )
+        // return;
+    // box.SetScript( "loot_box_class@_LootBoxInit" );
+// }
+
+void _LootBoxInit( Item& box, bool firstTime )
+{
+    box.SetEvent( ITEM_EVENT_USE, "_BoxUse" );
+    box.SetEvent( ITEM_EVENT_SKILL, "_BoxSkill" );
+    box.Update();
+}
+
+bool _BoxSkill( Item& item, Critter& player, int skill )
+{
+    // на всякий случай...
+    if( !player.IsPlayer() ) return false;
+ 
+    if( skill == SK_SCIENCE )
+    {
+		bool FirstTime = true;
+        player.Wait( 1000 );
+        LootBoxInfo@ info = LootBoxInfo( player.GetMap(), player, item, FirstTime );
+        GameVar             @mapId = GetLocalVar( VAR_SCEN_MAPID, player.Id );
+        GameVar             @hexX  = GetLocalVar( VAR_SCEN_HEX_X, player.Id );
+        GameVar             @hexY  = GetLocalVar( VAR_SCEN_HEX_Y, player.Id );
+        GameVar             @proto = GetLocalVar( VAR_SCEN_PROTO, player.Id );
+        if( !valid( info ) || !valid( mapId ) || !valid( hexX ) || !valid( hexY ) )
+            return false;
+        if( info.TriesLeft < 1 )
+        {
+            player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_BLOCKED );
+            return true;
+        }
+        else { player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_INFO, "$num" + info.TriesLeft ); }
+        mapId = player.GetMap().Id;
+        hexX = item.HexX;
+        hexY = item.HexY;
+        proto = item.GetProtoId();
+        player.ShowScreen( SCREEN_SAY, 0, "answer_TrySolve" );
+        player.SayMsg( SAY_SAY_TITLE, TEXTMSG_TEXT, STR_HEADER );
+        player.Say( SAY_SAY_TEXT, "?" );
+        return true;
+    }
+    return true;
+}
+
+bool _BoxUse( Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery )
+{
+ // пока не допускается использование предметов
+ // в дальнейшем сделаю использование электронных отмычек мк2 чтобы давало больше на 3 попытки
+
+ // Пример
+ //   if( valid( onItem ) || valid( onScenery ) ) return true;
+ //   if( cr.Skill[ SK_SCIENCE ] >= MIN_SCIENCE )
+ //   {
+ //       cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_HIGH_SCIENCE );
+ //   }
+ //   else { cr.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_LOW_SCIENCE ); }
+    return true;
+}
+
+void answer_TrySolve( Critter& player, uint answerI, string& answerS )
+{
+    LootBoxInfo@ info = GetBoxInfo( player );
+    if( valid( info ) )
+    {
+        string code = "";
+        bool   solved = info.TrySolveBox( player, answerS, code );
+        player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_ANSWER, "$pcode" + answerS + "$code" + code );
+        if( solved )
+        {
+            player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_SOLVED );
+            player.StatBase[ ST_EXPERIENCE ] += QUEST_EXPIRIENCE;
+            player.SayMsg( SAY_NETMSG, TEXTMSG_TEXT, STR_LOOT );
+            CreateTimeEvent( __FullSecond + REAL_SECOND( 1 ) / 2, "e_GiveBox", player.Id, false );
+			//уничтожить лут бокс
+			Map@ map = player.GetMap();
+			LootBoxInfo@ Box = GetBoxInfo( player );
+			if( valid( Box ) )
+			{
+				uint16 proto = Box.BoxPid;
+				if( valid( map ) )
+				{
+					Item@[] item;
+					uint ItemsCount = map.GetItems( proto, item );
+					for( uint i = 0; i < ItemsCount; i++ ){ DeleteItem( item[i] ); }
+				}
+			}
+			Box.Erase();
+        }
+		else
+		{
+			//Бить током _GetMinusHP
+			player.StatBase[ ST_CURRENT_HP ] -= _GetMinusHP( player.Skill[ SK_SCIENCE ], player.Stat[ ST_LEVEL ] );
+			//Анимация Animate
+			player.Animate( 0, ANIM2_DAMAGE_FRONT, null, true, false );
+			Map@ map = player.GetMap();
+			map.RunEffect( PID_EXPLODE_EMP, player.HexX, player.HexY, Random( 1, 2 ) );
+			//player.Say( SAY_NORM, "oooOOO" );
+		}
+    }
+}
+
+uint e_GiveBox( uint[] @ values )
+{
+    Critter@ cr = GetCritter( values[ 0 ] );
+    if( valid( cr ) )
+    {
+		//cr.Say( SAY_NORM, "LOOT LOOT LOOT" );
+		
+		switch( Random(1,3) )
+		{
+			case 1: cr.AddItem(PID_COMBAT_ARMOR_MK_II, 1); cr.AddItem(PID_SUPER_STIMPAK, 15); cr.AddItem(PID_PSYCHO, 1);
+				break;
+			case 2: cr.AddItem(PID_TESLA_ARMOR, 1); cr.AddItem(PID_SUPER_STIMPAK, 15); cr.AddItem(PID_PSYCHO, 1);
+				break;
+			//пустынку
+			default: cr.AddItem(PID_COMBAT_ARMOR, 1); cr.AddItem(PID_SUPER_STIMPAK, 15); cr.AddItem(PID_PSYCHO, 1);
+				break;
+		}
+		
+		
+		if (cr.SkillBase[ SK_SMALL_GUNS ] >=121)
+		{
+			//ЛО case
+			switch( Random(1,4) )
+			{
+			case 1: cr.AddItem(PID_SNIPER_RIFLE, 1); cr.AddItem(PID_223_FMJ, 120);
+				break;
+			case 2: cr.AddItem(PID_M72_GAUSS_RIFLE, 1); cr.AddItem(PID_2MM_EC_AMMO, 60);
+				break;
+			case 3: cr.AddItem(PID_INDEPENDENT, 1); cr.AddItem(PID_223_FMJ, 120);
+				break;
+			default: cr.AddItem(PID_HK_G11E, 1); cr.AddItem(PID_4_7MM_CASELESS, 120);
+				break;
+			}
+			return 0;
+		}
+
+		if (cr.SkillBase[ SK_ENERGY_WEAPONS ] >=121)
+		{
+			//Энерго
+			switch( Random(1,3) )
+			{
+			case 1: cr.AddItem(PID_YK42B_PULSE_RIFLE, 1); cr.AddItem(PID_MICRO_FUSION_CELL, 60);
+				break;
+			case 2: cr.AddItem(PID_PLASMA_RIFLE, 1); cr.AddItem(PID_MICRO_FUSION_CELL, 60);
+				break;
+			default: cr.AddItem(PID_LASER_RIFLE_EXT_CAP, 1); cr.AddItem(PID_MICRO_FUSION_CELL, 60);
+				break;
+			}
+			return 0;
+		}
+
+		if (cr.SkillBase[ SK_BIG_GUNS ] >=121)
+		{
+			//Тяж
+			switch( Random(1,4) )
+			{
+			case 1: cr.AddItem(PID_ROCKET_LAUNCHER, 1); cr.AddItem(PID_ROCKET_AP, 15);
+				break;
+			case 2: cr.AddItem(PID_BOZAR, 1); cr.AddItem(PID_223_FMJ, 120);
+				break;
+			case 3: cr.AddItem(PID_VINDICATOR_MINIGUN, 1); cr.AddItem(PID_4_7MM_CASELESS, 300);
+				break;
+			default: cr.AddItem(PID_IMPROVED_FLAMETHROWER, 1); cr.AddItem(PID_FLAMETHROWER_FUEL_MK_II, 30);
+				break;
+			}
+			return 0;
+		}
+
+		if (cr.SkillBase[ SK_REPAIR ] >=140)
+		{
+			//ремонт
+			switch( Random(1,4) )
+			{
+			case 1: cr.AddItem(PID_FRAG_SHOTGUN, 1); cr.AddItem(PID_SHOTGUN_SHELLS, 60);
+				break;
+			case 2: cr.AddItem(PID_C_NAILGUN, 1); cr.AddItem(PID_NAILS_BIG, 120);
+				break;
+			case 3: cr.AddItem(PID_GASLASER, 1); cr.AddItem(PID_MICRO_FUSION_CELL, 60);
+				break;
+			default: cr.AddItem(PID_SHAITAN, 15);
+				break;
+			}
+			return 0;
+		}
+
+		if (cr.SkillBase[ SK_UNARMED ] >=131)
+		{
+			//рукопаш-руки
+			cr.AddItem(PID_MEGA_POWER_FIST, 1); cr.AddItem(PID_SMALL_ENERGY_CELL, 60);
+		}
+
+		if (cr.SkillBase[ SK_MELEE_WEAPONS ] >=100)
+		{
+			//рукопаш-мечи
+			switch( Random(1,2) )
+			{
+			case 1: cr.AddItem(PID_SUPER_SLEDGE, 1);
+				break;
+			default: cr.AddItem(PID_RIPPER, 1); cr.AddItem(PID_SMALL_ENERGY_CELL, 60);
+				break;
+			}
+			return 0;
+		}
+
+		if (cr.SkillBase[ SK_THROWING ] >=131)
+		{
+			//гранаты
+			switch( Random(1,5) )
+			{
+			case 1: cr.AddItem(PID_FRAG_GRENADE, 30);
+				break;
+			case 2: cr.AddItem(PID_PLASMA_GRENADE, 30);
+				break;
+			case 3: cr.AddItem(PID_PULSE_GRENADE, 30);
+				break;
+			case 4: cr.AddItem(PID_THROWING_KNIFE_MK2, 30);
+				break;
+			default: cr.AddItem(PID_HAND_LAUNCHER, 1); cr.AddItem(PID_PG_FRAG, 18);
+				break;
+			}
+			return 0;
+		}
+		
+		//Тут чтото выдать если ничего не подошло
+		cr.AddItem(PID_BOTTLE_CAPS, 3000);
+    }
+    return 0;
+}

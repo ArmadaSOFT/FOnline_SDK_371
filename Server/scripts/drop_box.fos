@@ -1,0 +1,283 @@
+#include "_macros.fos"
+#include "_msgstr.fos"
+
+import void SmokeBlast( Map& map, uint16 hexX, uint16 hexY, uint16 smokePid, uint ownerId ) from "smoke_grenade";
+
+#define PID_FLY_VERT	( 831 )
+#define VERT_KD         ( 30 * 60 * 20 ) //КД вылета вертушки 30 минут
+#define BOX_DELETE_TIME	( 25 * 60 * 20 ) //Время до удаления ящика 25 минут
+#define BOX_RADIO_TIME	( 10 * 60 * 20 ) //Время до сообщения по рации 10 минут
+//#define PID_LOOT_BOX    ( 90 ) //рюкзачек
+#define PID_LOOT_BOX    ( 199 ) //большой ящик
+#define ENTIRE_MINOMET  ( 894 ) //id энтайра для минометного обстрела "вне зданий"
+								// 894 - энтайр внутри домика
+								// 901 - свободные под ящики
+
+#define STR_RADIO       ( 80201 ) // Пилот: База приём! Посылка доставлена по адресу @lex s_loc@. Возвращаюсь на дозаправку...
+
+class Entire { int Number; uint16 HexX; uint16 HexY; }
+
+uint _VertInit( uint[] @ values )
+{
+	CreateTimeEvent( __FullSecond , "_VertFly", values, false );
+	CreateTimeEvent( __FullSecond + (VERT_KD), "_VertInit", values, true );
+	return 0;
+}
+
+uint _VertFly( uint[] @ values )
+{
+	uint[] LocBufer = { LOCATION_Den, LOCATION_Klamath, LOCATION_Modoc, LOCATION_Gecko, LOCATION_BrokenHills, LOCATION_NewReno, LOCATION_Sierra, LOCATION_NCR, LOCATION_MilitaryBase, LOCATION_Redding, LOCATION_SanFrancisco, LOCATION_Navarro, LOCATION_Arroyo, LOCATION_PrimalTribe };
+	int i = Random(0,LocBufer.length()-1);
+	Location @ loc = GetLocationByPid( LocBufer[i], 0 );
+	//Location @ loc = GetLocationByPid( LOCATION_Klamath, 0 ); //test
+
+	if( !valid( loc ) ) return -1;
+	Map @ map = loc.GetMapByIndex( 0 );
+	
+	uint16 hx = Random((map.GetWidth()/2)-50,(map.GetWidth()/2)+50);
+    uint16 hy = Random((map.GetHeight()/2)-50,(map.GetHeight()/2)+50);
+	
+	//Выбрать на карте энтайр точки сброса ( 901 ) //После вайпа переделать карты
+	//if (!GetFirstEntire( map, ENTIRE_MINOMET, hx, hy )) { return -1; }
+	
+	//пытаемся найти гекс вне зданий ( 894 ) //До вайпа использовать минометные энтайры
+	uint16 hx1 = hx;
+    uint16 hy1 = hy;
+	bool inHouse = true;
+	if (!GetFirstEntire( map, ENTIRE_MINOMET, hx1, hy1 )) { return -1; }
+	//Тут надо цикл поиска рандомной точки дальше 5 гексов от энтайра "в домике"
+	//зациклить не даёт движок =( десять попыток угадать нужный рандомный гекс...
+	if( (map.GetPathLength(hx,hy,hx1,hy1,1))<5 ){ hx = Random((map.GetWidth()/2)-50,(map.GetWidth()/2)+50); hy = Random((map.GetHeight()/2)-50,(map.GetHeight()/2)+50); hx1 = hx; hy1 = hy; inHouse = GetFirstEntire( map, ENTIRE_MINOMET, hx1, hy1 ); }
+	if( (map.GetPathLength(hx,hy,hx1,hy1,1))<5 ){ hx = Random((map.GetWidth()/2)-50,(map.GetWidth()/2)+50); hy = Random((map.GetHeight()/2)-50,(map.GetHeight()/2)+50); hx1 = hx; hy1 = hy; inHouse = GetFirstEntire( map, ENTIRE_MINOMET, hx1, hy1 ); }
+	if( (map.GetPathLength(hx,hy,hx1,hy1,1))<5 ){ hx = Random((map.GetWidth()/2)-50,(map.GetWidth()/2)+50); hy = Random((map.GetHeight()/2)-50,(map.GetHeight()/2)+50); hx1 = hx; hy1 = hy; inHouse = GetFirstEntire( map, ENTIRE_MINOMET, hx1, hy1 ); }
+	if( (map.GetPathLength(hx,hy,hx1,hy1,1))<5 ){ hx = Random((map.GetWidth()/2)-50,(map.GetWidth()/2)+50); hy = Random((map.GetHeight()/2)-50,(map.GetHeight()/2)+50); hx1 = hx; hy1 = hy; inHouse = GetFirstEntire( map, ENTIRE_MINOMET, hx1, hy1 ); }
+	if( (map.GetPathLength(hx,hy,hx1,hy1,1))<5 ){ hx = Random((map.GetWidth()/2)-50,(map.GetWidth()/2)+50); hy = Random((map.GetHeight()/2)-50,(map.GetHeight()/2)+50); hx1 = hx; hy1 = hy; inHouse = GetFirstEntire( map, ENTIRE_MINOMET, hx1, hy1 ); }
+	if( (map.GetPathLength(hx,hy,hx1,hy1,1))<5 ){ hx = Random((map.GetWidth()/2)-50,(map.GetWidth()/2)+50); hy = Random((map.GetHeight()/2)-50,(map.GetHeight()/2)+50); hx1 = hx; hy1 = hy; inHouse = GetFirstEntire( map, ENTIRE_MINOMET, hx1, hy1 ); }
+	if( (map.GetPathLength(hx,hy,hx1,hy1,1))<5 ){ hx = Random((map.GetWidth()/2)-50,(map.GetWidth()/2)+50); hy = Random((map.GetHeight()/2)-50,(map.GetHeight()/2)+50); hx1 = hx; hy1 = hy; inHouse = GetFirstEntire( map, ENTIRE_MINOMET, hx1, hy1 ); }
+	if( (map.GetPathLength(hx,hy,hx1,hy1,1))<5 ){ hx = Random((map.GetWidth()/2)-50,(map.GetWidth()/2)+50); hy = Random((map.GetHeight()/2)-50,(map.GetHeight()/2)+50); hx1 = hx; hy1 = hy; inHouse = GetFirstEntire( map, ENTIRE_MINOMET, hx1, hy1 ); }
+	if( (map.GetPathLength(hx,hy,hx1,hy1,1))<5 ){ hx = Random((map.GetWidth()/2)-50,(map.GetWidth()/2)+50); hy = Random((map.GetHeight()/2)-50,(map.GetHeight()/2)+50); hx1 = hx; hy1 = hy; inHouse = GetFirstEntire( map, ENTIRE_MINOMET, hx1, hy1 ); }
+	//делать через white не получится... есть вероятность работы скрипта больше чем допустимый лимит
+	
+	float angle = 45.0f;
+	uint   awayDist = Random( 1, 29 );
+	map.GetHexCoord(hx,hy,hx1,hy1,angle,awayDist);
+	hx = hx1;
+	hy = hy1;
+	
+	uint16 x0 = hx;
+    uint16 y0 = hy;
+	uint16 x1 = hx;
+    uint16 y1 = hy;
+	int randomDir = Random(0,1);
+	uint MapSpace = map.GetWidth();
+	if(MapSpace<map.GetHeight()) MapSpace = map.GetHeight();
+	switch( randomDir )
+	{
+		case 1: map.MoveHexByDir( x0, y0, 4, MapSpace ); map.MoveHexByDir( x1, y1, 1, MapSpace );
+			break;
+		default: map.MoveHexByDir( x0, y0, 5, MapSpace ); map.MoveHexByDir( x1, y1, 2, MapSpace );
+			break;
+	}
+				
+	//вертик пролетит и скинет ящик
+    map.RunFlyEffect( PID_FLY_VERT, null, null, x0, y0, x1, y1 );
+	map.PlaySound("VertInOut.wav");
+	uint[] value = { map.Id, hx, hy  };
+	CreateTimeEvent( __FullSecond + (17*20), "_VertDropBox", value, false );
+	
+	return 0;
+}
+
+uint _VertDropBox(uint[] @ values)
+{
+	uint mapId = values[ 0 ];
+	uint16 hx = values[ 1 ];
+	uint16 hy = values[ 2 ];
+	Map@   map = GetMap( mapId );
+	
+	if( valid( map ) )
+	{
+		//выкинуть ящик
+		map.RunFlyEffect( PID_LOOT_BOX, null, null, (hx), (hy-2), hx, hy );
+		Item@ LootBox = map.AddItem(hx,hy,PID_LOOT_BOX,1);
+		map.PlaySound("BoxEnter.ogg");
+		if( !valid( LootBox ) ) return 0;
+		LootBox.SetScript( "loot_box_class@_LootBoxInit" );
+		SmokeBlast( map, hx,hy, PID_SMOKE, 0 );
+		
+		CreateTimeEvent( __FullSecond + BOX_RADIO_TIME, "_VertRadioDropBox", values, true );
+		CreateTimeEvent( __FullSecond + BOX_DELETE_TIME, "_VertDeleteDropBox", values, true );
+	}
+	else { return -1; }
+	return 0;
+}
+
+uint _VertDeleteDropBox(uint[] @ values)
+{
+	uint mapId = values[ 0 ];
+	uint16 hx = values[ 1 ];
+	uint16 hy = values[ 2 ];
+	Map@   map = GetMap( mapId );
+	
+	//if( valid( map ) && ( map.IsHexPassed( hx, hy ) ) )
+	if( valid( map ) )
+	{
+		//удалить ящик
+        Item@[] item;
+		uint ItemsCount = map.GetItems( hx, hy, item );
+		for( uint i = 0; i < ItemsCount; i++ ){ if(item[i].GetProtoId()==PID_LOOT_BOX){ DeleteItem( item[i] ); } }
+	}
+	else { return -1; }
+	return 0;
+}
+
+uint _VertRadioDropBox(uint[] @ values)
+{
+	uint mapId = values[ 0 ];
+	uint16 hx = values[ 1 ];
+	uint16 hy = values[ 2 ];
+	Map@   map = GetMap( mapId );
+	Location@ loc = map.GetLocation();
+	if( valid( map ) )
+	{
+		//Проверить есть ли в том месте лут бокс
+		Item@[] item;
+		uint ItemsCount = map.GetItems( hx, hy, item );
+		bool haveBox = false;
+		for( uint i = 0; i < ItemsCount; i++ ) { if(item[i].GetProtoId()==PID_LOOT_BOX) { haveBox = true; } }
+		if(haveBox)
+		{
+				//Сообщение в рацию о сбросе ящика в город N
+				RadioMessageMsg( 0, TEXTMSG_TEXT, STR_RADIO, "$s_loc@msg GM " + STR_GM_NAME( loc.GetProtoId() ) + "@" );
+				//RadioMessageMsg( 0, TEXTMSG_TEXT, STR_RADIO, "$s_loc@msg GM " + ( STR_MAP_NAME(map.GetProtoId()) ) + "@" ); //сообщить конкретную карту
+				CreateTimeEvent( __FullSecond + (60 * 20), "_VertSignalDropBox", values, true );
+		}
+	}
+	else { return -1; }
+	return 0;
+}
+
+import void AddSpacialSmoke( Map@ map, uint16 hexX, uint16 hexY, int16 pid ) from "dungepvp4";
+import void DeleteAllSmoke( Map@ map, int16 pid ) from "dungepvp4";
+
+uint _VertSignalDropBox(uint[] @ values)
+{
+	uint mapId = values[ 0 ];
+	uint16 hx = values[ 1 ];
+	uint16 hy = values[ 2 ];
+	Map@   map = GetMap( mapId );
+	Location@ loc = map.GetLocation();
+	if( valid( map ) )
+	{
+		//Проверить есть ли в том месте лут бокс
+		Item@[] item;
+		uint ItemsCount = map.GetItems( hx, hy, item );
+		bool haveBox = false;
+		for( uint i = 0; i < ItemsCount; i++ ) { if(item[i].GetProtoId()==PID_LOOT_BOX) { haveBox = true; } }
+
+		DeleteAllSmoke( map, PID_SMOKE );
+		uint Radius = 3;
+		if(haveBox)
+		{
+			//Сигнал в точке ящика
+			//цикл поиска всех координат	
+			for(uint i=0, j=Radius; i<j; i++)
+			{
+				AddSpacialSmoke( map, hx-Radius+i,(hy-floor((Radius+i)/2)), PID_SMOKE );
+				AddSpacialSmoke( map, hx+i,(hy-Radius+(floor((i+1)/2))), PID_SMOKE );
+				AddSpacialSmoke( map, hx-Radius,(hy-floor(Radius/2)+i), PID_SMOKE );
+				AddSpacialSmoke( map, hx+Radius,(hy+floor(Radius/2)-i), PID_SMOKE );
+				AddSpacialSmoke( map, hx-i,(hy+Radius-floor((i)/2)), PID_SMOKE );
+				AddSpacialSmoke( map, hx+(i+1),(hy+Radius-floor((i+1)/2)), PID_SMOKE );
+			}
+			
+			//повторить через минуту
+			CreateTimeEvent( __FullSecond + (60 * 20), "_VertSignalDropBox", values, true );
+		}
+	}
+	else { return -1; }
+	return 0;
+}
+
+uint CountEntires( Map& map, Entire[]& entires, int number )
+{
+    uint oldCount = entires.length();
+    uint count = map.CountEntire( number );
+    entires.resize( oldCount + count );
+    for( uint i = 0; i < count; i++ )
+    {
+        Entire@ ent = entires[ oldCount + i ];
+        if( map.GetEntireCoords( number, i, ent.HexX, ent.HexY ) == false ) return 0;
+        ent.Number = number;
+    }
+    return count;
+}
+
+bool GetFirstEntire( Map& map, int number, uint16& hx, uint16& hy )
+{
+    uint16 hxBase = hx;
+    uint16 hyBase = hy;
+    Entire[] entires;
+    uint count = CountEntires( map, entires, number );
+    if( count == 0 ) return false;
+    hx = entires[ 0 ].HexX;
+    hy = entires[ 0 ].HexY;
+    for( uint i = 1; i < count; i++ )
+    {
+        Entire@ ent = entires[ i ];
+        if( GetDistantion( hxBase, hyBase, ent.HexX, ent.HexY ) < GetDistantion( hxBase, hyBase, hx, hy ) )
+        {
+			if( ( map.IsHexPassed( hx, hy ) ) && ( ( hx != 0 && hy != 0 && hx < map.GetWidth() && hy < map.GetHeight() ) ) )
+			{
+				hx = ent.HexX;
+				hy = ent.HexY;
+			}
+        }
+    }
+    return true;
+}
+
+
+//~run drop_box _DestroyTimeEvent 0 0 0 // p0 - удалить еденичный ивент // p1-p2 удалить весь диапазон ивентов
+void _DestroyTimeEvent( Critter& cr, int p0, int p1, int p2 )
+{
+	if(p0>0)
+	{
+		::EraseTimeEvent( p0 );
+		cr.Say( SAY_NORM, "TimeEvent Deleteted" );
+	}
+	if(p1>0 && p2>0) { for(uint i=p1, j=p2; i<j; i++) ::EraseTimeEvent( i ); }
+}
+
+//~run drop_box _Init 0 0 0
+void _Init( Critter& cr, int p0, int p1, int p2 )
+{
+	CreateTimeEvent( __FullSecond, "_VertInit", p0, true );
+	cr.Say( SAY_NORM, "START LOOT BOX EVENT" );
+}
+
+//~run drop_box _ColorBox 0 0 0		//Попытка сделать цветной Item - Неудачная
+// void _ColorBox(Critter& cr, int p0, int p1, int p2 )
+// {
+	// Map@ map = cr.GetMap();
+    // if( valid( map ) )
+    // {
+        // Item@ item = map.AddItem( cr.HexX+1, cr.HexY+1, ( PID_SMOKE ), 1 );
+        // if( valid( item ) )
+        // {
+			// item.Val1=1;
+			// if( FLAG( item.Flags, ITEM_COLORIZE ) ) UNSETFLAG( item.Flags, ITEM_COLORIZE );
+			// item.LightIntensity = 100;
+			// item.LightDistance = 7;
+			// item.LightColor = 16711680;
+			// if( FLAG( item.Flags, ITEM_LIGHT ) ) UNSETFLAG( item.Flags, ITEM_LIGHT );
+			// SETFLAG( item.Flags, ITEM_LIGHT );
+			// SETFLAG( item.Flags, ITEM_COLORIZE  );
+           	// SETFLAG( item.Flags, ITEM_NO_BLOCK );
+			// SETFLAG( item.Flags, ITEM_SHOOT_THRU );
+			// item.Update();
+			// cr.Say( SAY_NETMSG, "item " + item.GetProtoId() + " flags " + item.Flags + " Color - " + item.LightGetColor() );
+        // }
+		// else cr.Say( SAY_NORM, "NO ITEM" );
+    // } else cr.Say( SAY_NORM, "FAIL" );
+// }
